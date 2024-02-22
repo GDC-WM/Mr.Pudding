@@ -1,0 +1,10 @@
+ea4bc82a6ad023ab7ee23ee620429895
+::res://::1708560609
+GraphEditor.tscn::PackedScene::3612863085298299081::1708389467::0::1::::<><>::
+icon.svg::CompressedTexture2D::2911035774957382082::1707516749::1708559566::1::::<><>::
+::res://addons/::1708560170
+::res://addons/godot-jolt_v0.12.0-stable/::1708560175
+::res://addons/godot-jolt_v0.12.0-stable/addons/::1708560453
+::res://Levels/::1708559779
+CharacterMovement.gd::GDScript::-1::1708559779::0::1::::<>CharacterBody2D<>::
+test.tscn::PackedScene::5496211622213262461::1708559779::0::1::::<><>::res://Levels/CharacterMovement.gd
