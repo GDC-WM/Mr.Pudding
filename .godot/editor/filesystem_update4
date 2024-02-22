@@ -1,2 +1,3 @@
 res://Levels/test.tscn
 res://Levels/CharacterMovement.gd
+res://Entities/player.tscn

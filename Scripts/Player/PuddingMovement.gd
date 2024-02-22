@@ -1,6 +1,5 @@
 extends CharacterBody2D
 
-
 #speed at which the player can run in pixels per second
 const SPEED = 600.0
 #acceleration due to movement, pixels per second squared
