@@ -1,4 +1,4 @@
-res://Entities/player.tscn
-res://Scripts/Player/PuddingState.gd
-res://Scripts/Player/PuddingMovement.gd
 res://Levels/test.tscn
+res://Scripts/Player/PuddingMovement.gd
+res://Scripts/Player/PuddingState.gd
+res://Entities/player.tscn
