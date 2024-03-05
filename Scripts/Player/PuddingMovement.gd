@@ -18,15 +18,21 @@ const JUMP_HEIGHT = 100.0
 #hang time in the air in seconds while holding jump
 const JUMP_HANG = 0.15
 
+#multiplier for acceleration values when turning around
 const DECELLERATION_SCALE = 2.0
 
+#time the player can stand off of a platform before being considered no longer grounded
 const CAYOTE_TIME := 0.1
 
+#the state of the player
 var state := PuddingState.new()
 
+#calls every frame, delta is the frame time 
 func _process(delta):
+	#get input from the player
 	update_desired_direction(delta)
 	
+	#change the movement axes of the player
 	update_axes()
 	
 	#apply horizontal acceleration
@@ -43,6 +49,8 @@ func _process(delta):
 		FALL_ACCEL, FALL_ACCEL, 
 		delta
 	)
+	
+	#let the state keep up with the player's changes
 	state.update(delta)
 	
 	print(state.current_vel)
@@ -52,6 +60,7 @@ func _physics_process(delta):
 	velocity = state.get_velocity()
 	move_and_slide()
 
+#take input from the player and apply it to state.desired_direction
 func update_desired_direction(delta):
 	
 	#get input from the player
@@ -59,11 +68,12 @@ func update_desired_direction(delta):
 	var right := Input.is_action_pressed("ui_right")
 	var jump := Input.is_action_pressed("ui_accept")
 	
-	#say that we want some horizontal movement
-	state.desired_direction[0] = (-1 if left else 0) + (1 if right else 0)
 	
-	if (is_on_wall() && get_wall_normal().dot(state.current_horizontal * state.desired_direction[0]) < 0.0):
+	#check if the player is running into a wall by checking if they are checking a wall and walking into it
+	if (is_on_wall() && get_wall_normal().dot(state.get_axis_desired(0)) < 0.0):
 		state.desired_direction[0] = 0.0
+	else:
+		state.desired_direction[0] = (-1 if left else 0) + (1 if right else 0)
 	
 	state.grounded = is_on_floor()
 	if state.grounded: state.cur_cayote = 0.0
@@ -98,4 +108,4 @@ func update_desired_direction(delta):
 func update_axes():
 	if state.grounded:
 		var n := get_floor_normal()
-		state.current_horizontal = Vector2(-n.y, n.x)
+		state.current_axis_vectors[0] = Vector2(-n.y, n.x)
