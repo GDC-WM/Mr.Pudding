@@ -18,31 +18,49 @@ const JUMP_HEIGHT = 100.0
 #hang time in the air in seconds while holding jump
 const JUMP_HANG = 0.15
 
+#multiplier for acceleration values when turning around
 const DECELLERATION_SCALE = 2.0
 
+#time the player can stand off of a platform before being considered no longer grounded
 const CAYOTE_TIME := 0.1
 
+#the state of the player
 var state := PuddingState.new()
 
+#calls every frame, delta is the frame time 
 func _process(delta):
+	#get input from the player
 	update_desired_direction(delta)
 	
-	#horizontal accelleration
-	if state.grounded:
-		state.current_vel = accelerate(state.current_vel, 0, -SPEED, SPEED, GROUND_ACCEL, GROUND_ACCEL * DECELLERATION_SCALE, delta)
-		state.current_vel.y = 0.0
-	else:
-		state.current_vel = accelerate(state.current_vel, 0, -SPEED, SPEED, AIR_ACCEL, AIR_ACCEL, delta)
-		#vertical acceleration
-		state.current_vel = accelerate(state.current_vel, 1, -JUMP_SPEED, FALL_SPEED, FALL_ACCEL, FALL_ACCEL, delta)
+	#change the movement axes of the player
+	update_axes()
 	
+	#apply horizontal acceleration
+	state.accelerate(
+		0,
+		-SPEED, SPEED, 
+		GROUND_ACCEL, GROUND_ACCEL * DECELLERATION_SCALE, 
+		delta
+	)
+	#apply vertical acceleration
+	state.accelerate(
+		1,
+		-FALL_SPEED, JUMP_SPEED, 
+		FALL_ACCEL, FALL_ACCEL, 
+		delta
+	)
+	
+	#let the state keep up with the player's changes
 	state.update(delta)
+	
+	print(state.current_vel)
 
 #update the physics body by telling it to move along "current_vel" using built-in functions
 func _physics_process(delta):
-	velocity = state.current_vel
+	velocity = state.get_velocity()
 	move_and_slide()
 
+#take input from the player and apply it to state.desired_direction
 func update_desired_direction(delta):
 	
 	#get input from the player
@@ -50,60 +68,44 @@ func update_desired_direction(delta):
 	var right := Input.is_action_pressed("ui_right")
 	var jump := Input.is_action_pressed("ui_accept")
 	
-	#say that we want some horizontal movement
-	state.desired_direction.x = (-1 if left else 0) + (1 if right else 0)
+	
+	#check if the player is running into a wall by checking if they are checking a wall and walking into it
+	if (is_on_wall() && get_wall_normal().dot(state.get_axis_desired(0)) < 0.0):
+		state.desired_direction[0] = 0.0
+	else:
+		state.desired_direction[0] = (-1 if left else 0) + (1 if right else 0)
 	
 	state.grounded = is_on_floor()
 	if state.grounded: state.cur_cayote = 0.0
 	
 	#if they are, check for jumps
 	if state.grounded || state.cur_cayote < CAYOTE_TIME:
-		state.desired_direction.y = 0
-		state.jump_height = 0.0
-		state.jump_hang = 0.0
+		state.hold_on_ground()
 		#if jumping, instantly hit jumping speed
 		if jump:
-			jump()
+			state.start_jump_on_ground(JUMP_SPEED)
+			print("jump")
 	#if in the air, count towards the jump height and jump hang to see if the player should fall
 	else:
 		if !jump:
-			state.jump_height = INF
-			state.jump_height = INF
-		
-		if state.jump_height < JUMP_HEIGHT && jump:
-			state.jump_height -= state.current_vel.y * delta
-			state.current_vel.y = -JUMP_SPEED
-			state.desired_direction.y = -1
-		elif state.jump_height >= JUMP_HEIGHT && state.jump_hang < JUMP_HANG && jump:
-			state.jump_height = INF
-			state.jump_hang += delta
-			state.desired_direction.y = 0
+			state.end_jump_in_air()
+			
+		if state.jump_height < JUMP_HEIGHT:
+			state.hold_jump_in_air(JUMP_SPEED)
+			print("rise")
+		elif state.jump_height >= JUMP_HEIGHT && state.jump_hang < JUMP_HANG:
+			state.hang_in_air(delta)
+			print("hang")
 		else:
-			state.jump_hang = INF
-			state.desired_direction.y = 1
+			state.end_jump_in_air()
+			state.desired_direction[1] = -1
+			print("fall")
+		
+		state.update_jump_height(delta)
 		
 	state.cur_cayote += delta
 
-#apply acceleration to a vector
-#"i" can be an integer or a string,
-#vectors in Godot can be indexed with square brackets, v[0] is the same as v['x'] and v.x
-func accelerate(v:Vector2, i, min:float, max:float, accel:float, deaccel:float, delta:float):
-	var target_v := state.desired_direction[i] * max
-	var d := target_v - v[i]
-	var a := signf(d)
-	if signf(target_v) != signf(v[i]):
-		a *= deaccel
-	else:
-		a *= accel
-	
-	v[i] += a * delta
-	#zero out v[i] to stop it from jittering around zero
-	if state.desired_direction[i] == 0.0 && absf(v[i]) < absf(a * delta):
-		v[i] = 0
-	return v
-
-func jump():
-	state.current_vel.y = -JUMP_SPEED
-	state.desired_direction.y = -1
-	state.grounded = false
-	state.cur_cayote = INF
+func update_axes():
+	if state.grounded:
+		var n := get_floor_normal()
+		state.current_axis_vectors[0] = Vector2(-n.y, n.x)

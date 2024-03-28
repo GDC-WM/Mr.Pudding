@@ -1,5 +1,4 @@
 res://Levels/test.tscn
-res://Levels/CharacterMovement.gd
 res://Entities/player.tscn
 res://Scripts/Player/PuddingMovement.gd
 res://Scripts/Player/PuddingState.gd
