@@ -63,7 +63,7 @@ func accelerate_component(from:float, axis:float, min:float, max:float, deaccel:
 	from += d * delta * a
 	from = clampf(from, min, max)
 	
-	if (absf(from) < 10): from = 0.0 #set to zero if close to zero
+	if (absf(from) < a * 0.005): from = 0.0 #set to zero if close to zero
 	
 	return from
 
