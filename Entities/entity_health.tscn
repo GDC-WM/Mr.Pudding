@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://n02gk23fbgp1"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/EntityHealth.gd" id="1_ga5eb"]
+
+[node name="EntityHealth" type="ProgressBar"]
+visible = false
+offset_right = 4.0
+offset_bottom = 27.0
+script = ExtResource("1_ga5eb")
