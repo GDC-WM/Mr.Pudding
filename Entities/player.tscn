@@ -13,3 +13,6 @@ script = ExtResource("1_6col6")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
 shape = SubResource("RectangleShape2D_72tns")
+
+[node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
+zoom = Vector2(1.5, 1.5)
