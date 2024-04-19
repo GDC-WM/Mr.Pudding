@@ -109,3 +109,4 @@ func update_axes():
 	if state.grounded:
 		var n := get_floor_normal()
 		state.current_axis_vectors[0] = Vector2(-n.y, n.x)
+
