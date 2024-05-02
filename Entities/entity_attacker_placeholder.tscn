@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://vkpdurgqmsfo"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/EntityAttacker.gd" id="1_uibe5"]
+[ext_resource type="Script" path="res://Scripts/Entities/DamageSource.gd" id="2_24725"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_e7l43"]
+size = Vector2(60, 60)
+
+[node name="Attacker" type="Area2D"]
+script = ExtResource("1_uibe5")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_e7l43")
+debug_color = Color(0.956863, 0.168627, 0.333333, 0.419608)
+
+[node name="Timer" type="Timer" parent="."]
+
+[node name="DamageSource" type="Node" parent="."]
+script = ExtResource("2_24725")

@@ -52,8 +52,6 @@ func _process(delta):
 	
 	#let the state keep up with the player's changes
 	state.update(delta)
-	
-	print(state.current_vel)
 
 #update the physics body by telling it to move along "current_vel" using built-in functions
 func _physics_process(delta):
@@ -67,7 +65,6 @@ func update_desired_direction(delta):
 	var left := Input.is_action_pressed("ui_left")
 	var right := Input.is_action_pressed("ui_right")
 	var jump := Input.is_action_pressed("ui_accept")
-	
 	
 	#check if the player is running into a wall by checking if they are checking a wall and walking into it
 	if (is_on_wall() && get_wall_normal().dot(state.get_axis_desired(0)) < 0.0):
@@ -84,7 +81,7 @@ func update_desired_direction(delta):
 		#if jumping, instantly hit jumping speed
 		if jump:
 			state.start_jump_on_ground(JUMP_SPEED)
-			print("jump")
+			#print("jump")
 	#if in the air, count towards the jump height and jump hang to see if the player should fall
 	else:
 		if !jump:
@@ -92,14 +89,14 @@ func update_desired_direction(delta):
 			
 		if state.jump_height < JUMP_HEIGHT:
 			state.hold_jump_in_air(JUMP_SPEED)
-			print("rise")
+			#print("rise")
 		elif state.jump_height >= JUMP_HEIGHT && state.jump_hang < JUMP_HANG:
 			state.hang_in_air(delta)
-			print("hang")
+			#print("hang")
 		else:
 			state.end_jump_in_air()
 			state.desired_direction[1] = -1
-			print("fall")
+			#print("fall")
 		
 		state.update_jump_height(delta)
 		

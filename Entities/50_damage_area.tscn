@@ -1,0 +1,25 @@
+[gd_scene load_steps=4 format=3 uid="uid://ccp7t641y8pvp"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/EntityAttacker.gd" id="1_8jq1j"]
+[ext_resource type="Script" path="res://Scripts/Entities/DamageSource.gd" id="2_0bq0e"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_op8id"]
+size = Vector2(64, 59)
+
+[node name="DamageArea" type="Area2D"]
+position = Vector2(846, 320)
+collision_layer = 3
+collision_mask = 3
+script = ExtResource("1_8jq1j")
+uses_action = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(-770, 45.5)
+shape = SubResource("RectangleShape2D_op8id")
+debug_color = Color(0.955014, 0.170098, 0.332187, 0.42)
+
+[node name="DamageSource" type="Node" parent="."]
+script = ExtResource("2_0bq0e")
+base_damage = 50
+
+[connection signal="ready" from="." to="." method="try_attack" flags=3]
