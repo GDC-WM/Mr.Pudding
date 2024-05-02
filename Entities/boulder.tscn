@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3 uid="uid://kegclpsjbi7u"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/EntityHurtbox.gd" id="1_mwukj"]
+[ext_resource type="PackedScene" uid="uid://n02gk23fbgp1" path="res://Entities/entity_health.tscn" id="2_015dh"]
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_t8eit"]
+points = PackedVector2Array(-30, -30, 30, -20, 40, 30, 10, 40, -20, 30, -30, 0)
+
+[node name="Boulder" type="RigidBody2D"]
+position = Vector2(846, 320)
+collision_mask = 255
+script = ExtResource("1_mwukj")
+entity_health_path = NodePath("EntityHealth")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("ConvexPolygonShape2D_t8eit")
+debug_color = Color(0.317647, 0.623529, 0.145098, 0.419608)
+
+[node name="EntityHealth" parent="." instance=ExtResource("2_015dh")]
+visible = true
+max_value = 200.0
+value = 0.0
