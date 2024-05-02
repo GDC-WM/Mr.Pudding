@@ -61,3 +61,4 @@ shape = SubResource("RectangleShape2D_grx6v")
 position = Vector2(83, 118)
 
 [node name="DamageArea" parent="." instance=ExtResource("3_pipfw")]
+up_time = 0.0
