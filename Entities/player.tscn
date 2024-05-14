@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://c80c87qvuq4qf"]
+[gd_scene load_steps=4 format=3 uid="uid://c80c87qvuq4qf"]
 
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
+[ext_resource type="Script" path="res://Scripts/Camera/PreceedParentCamera.gd" id="2_um4ab"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_72tns"]
 size = Vector2(32, 32)
@@ -13,3 +14,7 @@ script = ExtResource("1_6col6")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
 shape = SubResource("RectangleShape2D_72tns")
+
+[node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
+position_smoothing_speed = 10.0
+script = ExtResource("2_um4ab")
