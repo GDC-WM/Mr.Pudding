@@ -1,7 +1,8 @@
 extends CharacterBody2D
 
 ##Have a camera that moves to anticipate the target's movement, moving ahead of them
-##The "camera" also interacts with colliders, for this reason, the camera should be attached to a CharacterBody2D
+##The "camera" also interacts with colliders, for this reason, the script should be attached to a CharacterBody2D
+##The CharacterBody2D should have a camera and its own collider as children
 ##The CharacterBody2D's collision layers shouldn't interact with the base terrain, 
 ##but should with colliders denoting level borders. 
 
