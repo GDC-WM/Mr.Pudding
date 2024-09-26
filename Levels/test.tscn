@@ -52,3 +52,13 @@ position = Vector2(2, 7)
 shape = SubResource("RectangleShape2D_grx6v")
 
 [node name="Player" parent="." instance=ExtResource("1_mhii7")]
+
+[node name="StaticBody2D7" type="StaticBody2D" parent="."]
+position = Vector2(-21, 286)
+rotation = 1.5708
+collision_layer = 2
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D7"]
+shape = SubResource("WorldBoundaryShape2D_v2yi7")
+debug_color = Color(0.716814, 0.474044, 0.243091, 0.42)

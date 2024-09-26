@@ -1,10 +1,13 @@
-[gd_scene load_steps=4 format=3 uid="uid://c80c87qvuq4qf"]
+[gd_scene load_steps=5 format=3 uid="uid://c80c87qvuq4qf"]
 
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
-[ext_resource type="Script" path="res://Scripts/Camera/PreceedParentCamera.gd" id="2_um4ab"]
+[ext_resource type="Script" path="res://Scripts/Camera/PreceedTargetCamera.gd" id="2_gjv66"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_72tns"]
 size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6lhdp"]
+size = Vector2(1152, 648)
 
 [node name="Player" type="Node2D"]
 position = Vector2(563, 192)
@@ -15,6 +18,14 @@ script = ExtResource("1_6col6")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
 shape = SubResource("RectangleShape2D_72tns")
 
-[node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
+[node name="CameraRig" type="CharacterBody2D" parent="."]
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("2_gjv66")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CameraRig"]
+shape = SubResource("RectangleShape2D_6lhdp")
+debug_color = Color(0.717647, 0.47451, 0.243137, 0)
+
+[node name="Camera2D" type="Camera2D" parent="CameraRig"]
 position_smoothing_speed = 10.0
-script = ExtResource("2_um4ab")

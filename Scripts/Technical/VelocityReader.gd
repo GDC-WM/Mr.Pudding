@@ -20,3 +20,5 @@ func update(delta:float) -> void:
 	last_position = target.position
 	last_velocity = velocity
 
+func _to_string():
+	return "VelocityReader(" + str(target) + " velocity:" + str(velocity) + ", acceleration: " + str(acceleration)
