@@ -1,6 +1,13 @@
 extends Object
 class_name PuddingState
 
+enum MOVEMENT_TYPE {
+	WALK,
+	DASH,
+	RUN
+}
+var movement_type := MOVEMENT_TYPE.WALK
+
 #the current movement axes of the player
 #	change the value of one of these axes to change which way the player will move 
 #	add an axis to give the player a new way to move
@@ -28,6 +35,9 @@ var grounded := false
 var jump_height := INF
 var jump_hang := INF
 
+#the current dash time used by the player
+var dash_time := 0.0
+
 #the current cayote time used by the player
 var cur_cayote := 0.0
 
@@ -35,7 +45,13 @@ var cur_cayote := 0.0
 func update(delta):
 	for i in desired_direction.size():
 		direction_changed[i] = last_desired_direction[i] != desired_direction[i]
-	last_desired_direction = desired_direction
+		#preserve last direction when desired direction is 0 so that get_facing is preserved
+		last_desired_direction[i] = desired_direction[i] if desired_direction[i] != 0 else last_desired_direction[i]
+
+#the "facing" of the character along an axis is either their current direction, or their last direction if no direction is being inputted
+func get_facing(axis:int):
+	var f := desired_direction[axis] if desired_direction[axis] != 0 else last_desired_direction[axis]
+	return f if f != 0 else 1
 
 #the current velocity accumulated from the current velocity along each movement axis
 func get_velocity() -> Vector2:
@@ -90,10 +106,11 @@ func hold_jump_in_air(speed:float):
 func hang_in_air(delta:float):
 	jump_height = INF
 	jump_hang += delta
+	current_vel[1] *= 0.75
 	desired_direction[1] = 0
 
 #fall down from the end of a jump
-func end_jump_in_air():
+func fall_in_air():
 	jump_height = INF
 	jump_hang = INF
 
