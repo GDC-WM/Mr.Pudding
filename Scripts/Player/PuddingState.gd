@@ -72,14 +72,14 @@ func accelerate(along:int, min:float, max:float, deaccel:float, accel:float, del
 #pure function, works for any float and does not effect the movement axes on its own
 func accelerate_component(from:float, axis:float, min:float, max:float, deaccel:float, accel:float, delta:float) -> float:
 	var d := signf(axis)
-	var a := accel if d == 1.0 else deaccel
+	var a := accel if d == signf(from) else deaccel
 	
 	if (d == 0.0): d = -signf(from) #accelerate towards zero if the axis is nuetral
 	
 	from += d * delta * a
 	from = clampf(from, min, max)
 	
-	if (absf(from) < a * 0.005): from = 0.0 #set to zero if close to zero
+	if (absf(from) < a * 0.005): from = 0.0 #set to zero if close to zero relative to the acceleration
 	
 	return from
 
