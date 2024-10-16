@@ -26,6 +26,8 @@ const DASH_TIME := 0.25
 
 #multiplier for acceleration values when turning around
 const DECELLERATION_SCALE := 5.0
+#multiplier for acceleration values when exceeding SPEED 
+const WALK_PULL_SCALE := 0.1
 
 #time the player can stand off of a platform before being considered no longer grounded
 const CAYOTE_TIME := 0.1
@@ -42,6 +44,9 @@ func _process(delta):
 	if Input.is_action_pressed("dash") and state.movement_type == state.MOVEMENT_TYPE.WALK:
 		state.movement_type = state.MOVEMENT_TYPE.DASH
 		state.dash_time = 0.0
+	
+	if !Input.is_action_pressed("sprint") and state.movement_type == state.MOVEMENT_TYPE.RUN:
+		state.movement_type = state.MOVEMENT_TYPE.WALK
 	
 	#apply player input to state based on the movement type
 	match state.movement_type:
@@ -60,7 +65,7 @@ func _physics_process(delta):
 	move_and_slide()
 
 func is_pressing_wall():
-	return is_on_wall() && get_wall_normal().dot(state.get_axis_desired(0)) < 0.0
+	return is_on_wall() && get_wall_normal().dot(state.get_axis_vel(0)) < 0.0
 
 #call every frame to update the state's grounded variable
 func update_grounded():
@@ -124,12 +129,20 @@ func update_walk(delta):
 	
 	#apply state's other variables to velocity using acceleration
 	#apply horizontal acceleration
-	state.accelerate(
-		0,
-		-SPEED, SPEED, 
-		GROUND_ACCEL * DECELLERATION_SCALE, GROUND_ACCEL, 
-		delta
-	)
+	if state.axis_pull(state.current_vel[0], -SPEED, SPEED):
+		state.accelerate(
+			0,
+			-SPEED, SPEED, 
+			GROUND_ACCEL * WALK_PULL_SCALE, GROUND_ACCEL * WALK_PULL_SCALE, 
+			delta
+		)
+	else:
+		state.accelerate(
+			0,
+			-SPEED, SPEED, 
+			GROUND_ACCEL * DECELLERATION_SCALE, GROUND_ACCEL, 
+			delta
+		)
 	
 	#apply vertical acceleration
 	var fall_accel_mul = FASTFALL_ACCEL_MULTIPLIER if state.jump_height >= JUMP_HEIGHT else 1
@@ -155,11 +168,28 @@ func update_dash(delta):
 
 #after a dash the player is sprinting
 func update_run(delta):
-	update_jump(delta, true)
+	update_grounded()
+	
+	#implement wall running later, lol. If I crash into a walk, return to walking mode, which has cases for running into walls
+	if (is_pressing_wall()):
+		state.movement_type = state.MOVEMENT_TYPE.WALK
+		return
+	
+	var left := Input.is_action_pressed("ui_left")
+	var right := Input.is_action_pressed("ui_right")
+	var jump := Input.is_action_pressed("ui_accept")
+	
+	state.desired_direction[0] = (-1 if left else 0) + (1 if right else 0)
+	
+	#give the player a speed boost if they land within walking speed while sprinting
+	if signf(state.desired_direction[0]) == signf(state.current_vel[0]) && state.axis_pull(state.current_vel[0], -SPEED, SPEED) == 0:
+		state.current_vel[0] *= RUN_SPEED / SPEED
 	
 	state.accelerate(
 		0,
 		-RUN_SPEED, RUN_SPEED, 
-		0, RUN_ACCEL, 
+		RUN_ACCEL, RUN_ACCEL, 
 		delta
 	)
+	
+	

@@ -68,6 +68,10 @@ func accelerate(along:int, min:float, max:float, deaccel:float, accel:float, del
 		min, max, deaccel, accel, delta
 	)
 
+func axis_pull(weight:float, min:float, max:float):
+	var clamp := clampf(weight, min, max) 
+	return signf(weight - clamp)
+
 #internal acceleration function
 #pure function, works for any float and does not effect the movement axes on its own
 func accelerate_component(from:float, axis:float, min:float, max:float, deaccel:float, accel:float, delta:float) -> float:
@@ -76,8 +80,16 @@ func accelerate_component(from:float, axis:float, min:float, max:float, deaccel:
 	
 	if (d == 0.0): d = -signf(from) #accelerate towards zero if the axis is nuetral
 	
+	#if from is out of bounds, pull it back towards the range
+	var clamp := clampf(from, min, max) 
+	var over_d := signf(from - clamp)
+	
+	if over_d != 0.0:
+		d = -over_d
+	
 	from += d * delta * a
-	from = clampf(from, min, max)
+	if over_d == 0.0:
+		from = clampf(from, min, max)
 	
 	if (absf(from) < a * 0.005): from = 0.0 #set to zero if close to zero relative to the acceleration
 	
