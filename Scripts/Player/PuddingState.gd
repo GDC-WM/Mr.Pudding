@@ -35,9 +35,6 @@ var grounded := false
 var jump_height := INF
 var jump_hang := INF
 
-#the current dash time used by the player
-var dash_time := 0.0
-
 #the current cayote time used by the player
 var cur_cayote := 0.0
 

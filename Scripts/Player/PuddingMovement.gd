@@ -19,15 +19,11 @@ const JUMP_HEIGHT := 75.0
 #hang time in the air in seconds while holding jump
 const JUMP_HANG := -INF
 
-#constant speed of the player's dash in pixels per second
-const DASH_SPEED := 750.0
-#time the player dashes for before entering the run state
-const DASH_TIME := 0.25
-
 #multiplier for acceleration values when turning around
 const DECELLERATION_SCALE := 5.0
+const RUN_DECEL_SCALE := 2.0
 #multiplier for acceleration values when exceeding SPEED 
-const WALK_PULL_SCALE := 1.0
+const WALK_PULL_SCALE := 0.5
 
 #time the player can stand off of a platform before being considered no longer grounded
 const CAYOTE_TIME := 0.1
@@ -40,15 +36,10 @@ var state := PuddingState.new()
 
 #calls every frame, delta is the frame time 
 func _process(delta):
-	#transition state base on player input
-	if Input.is_action_pressed("dash") and state.movement_type == state.MOVEMENT_TYPE.WALK:
-		state.movement_type = state.MOVEMENT_TYPE.DASH
-		state.dash_time = 0.0
 	
 	#apply player input to state based on the movement type
 	match state.movement_type:
 		state.MOVEMENT_TYPE.WALK: update_walk(delta)
-		state.MOVEMENT_TYPE.DASH: update_dash(delta)
 		state.MOVEMENT_TYPE.RUN: update_run(delta)
 	
 	#update state's internal variables
@@ -151,19 +142,6 @@ func update_walk(delta):
 		delta
 	)
 
-#push the player forwards
-func update_dash(delta):
-	state.desired_direction[0] = state.get_facing(0)
-	state.desired_direction[1] = 0
-	
-	state.dash_time += delta
-	if (state.dash_time >= DASH_TIME || is_pressing_wall()):
-		state.movement_type = state.MOVEMENT_TYPE.WALK
-		return
-	
-	state.current_vel[0] = state.get_facing(0) * DASH_SPEED
-	state.current_vel[1] = 0.0
-
 #after a dash the player is sprinting
 func update_run(delta):
 	print("bruh")
@@ -184,7 +162,7 @@ func update_run(delta):
 	state.accelerate(
 		0,
 		-RUN_SPEED, RUN_SPEED, 
-		RUN_ACCEL * DECELLERATION_SCALE, RUN_ACCEL, 
+		RUN_ACCEL * RUN_DECEL_SCALE, RUN_ACCEL, 
 		delta
 	)
 	
