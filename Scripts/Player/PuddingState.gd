@@ -95,9 +95,10 @@ func accelerate_component(from:float, axis:float, min:float, max:float, deaccel:
 #keep the player on the ground as they walk and reset their jump
 func hold_on_ground():
 	desired_direction[1] = 0
-	current_vel[1] = 0.0
+	current_vel[1] = -50.0
 	jump_height = 0.0
 	jump_hang = 0.0
+	grounded = true
 
 #jump off the ground
 func start_jump_on_ground(speed:float):
@@ -136,3 +137,7 @@ func get_axis_desired(i:int) -> Vector2:
 #used by get_velocity to accumulate a current velocity from each axis
 func get_axis_vel(i:int) -> Vector2:
 	return current_axis_vectors[i] * current_vel[i]
+
+func transform_axes(t:Transform2D):
+	for i in current_axis_vectors.size():
+		current_axis_vectors[i] *= t

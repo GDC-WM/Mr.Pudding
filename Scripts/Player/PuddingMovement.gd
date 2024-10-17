@@ -30,13 +30,17 @@ const CAYOTE_TIME := 0.1
 
 const RUN_SPEED := 1500.0
 const RUN_ACCEL := 1000.0
+#the angle in radians that the player must be standing on to run up a ramp or wall
+const RAMP_ANGLE := 0.8
+
+func _ready():
+	floor_max_angle = RAMP_ANGLE * 0.5
 
 #the state of the player
 var state := PuddingState.new()
 
 #calls every frame, delta is the frame time 
 func _process(delta):
-	
 	#apply player input to state based on the movement type
 	match state.movement_type:
 		state.MOVEMENT_TYPE.WALK: update_walk(delta)
@@ -44,16 +48,14 @@ func _process(delta):
 	
 	#update state's internal variables
 	state.update(delta)
-	
-	print(state.current_vel)
 
 #update the physics body by telling it to move along "current_vel" using built-in functions
 func _physics_process(delta):
 	velocity = state.get_velocity()
 	move_and_slide()
 
-func is_pressing_wall():
-	return is_on_wall() && get_wall_normal().dot(state.get_axis_vel(0)) < 0.0
+func is_pressing_wall(wall:Vector2=get_wall_normal()):
+	return is_on_wall() && wall.dot(state.get_axis_vel(0)) < 0.0
 
 #call every frame to update the state's grounded variable
 func update_grounded():
@@ -62,6 +64,8 @@ func update_grounded():
 	if state.grounded:
 		var n := get_floor_normal()
 		state.current_axis_vectors[0] = Vector2(-n.y, n.x)
+	else:
+		state.current_axis_vectors[0] = Vector2.RIGHT
 
 #call every frame to update the state's measure of coyote time and apply jump behaviors every frame
 #jump argument should be true if the player is inputting a jump
@@ -102,19 +106,24 @@ func update_jump(delta, jump:bool):
 #take input from the player and apply it to state.desired_direction
 func update_walk(delta):
 	
+	#enable to test out the transform axes feature of the player state!
+	#state.transform_axes(Transform2D(delta * 0.1, Vector2.ZERO))
+	
 	#get input from the player
 	var left := Input.is_action_pressed("ui_left")
 	var right := Input.is_action_pressed("ui_right")
 	var jump := Input.is_action_pressed("ui_accept")
 	
+	update_jump(delta, jump)
+	
 	#check if the player is running into a wall by checking if they are checking a wall and walking into it
 	if (is_pressing_wall()):
 		state.desired_direction[0] = 0.0
 	else:
-		if Input.is_action_pressed("sprint"): state.movement_type = state.MOVEMENT_TYPE.RUN
+		if Input.is_action_pressed("sprint") and state.grounded: 
+			state.movement_type = state.MOVEMENT_TYPE.RUN
+			pass
 		state.desired_direction[0] = (-1 if left else 0) + (1 if right else 0)
-	
-	update_jump(delta, jump)
 	
 	#apply state's other variables to velocity using acceleration
 	#apply horizontal acceleration
@@ -142,16 +151,34 @@ func update_walk(delta):
 		delta
 	)
 
+func should_run_ramp(ramp_normal:Vector2) -> bool:
+	return is_on_wall() and ((
+			absf(state.current_axis_vectors[1].angle_to(ramp_normal)) < RAMP_ANGLE
+		) or (
+			!state.grounded
+		))
+
 #after a dash the player is sprinting
 func update_run(delta):
-	print("bruh")
+	
+	var wall := get_wall_normal()
+	var should_ramp := should_run_ramp(wall)
+	
+	if should_ramp: 
+		state.current_axis_vectors[0] = Vector2(-wall.y, wall.x)
+		up_direction = wall
+	else:
+		up_direction = Vector2.UP
 	
 	update_jump(delta, Input.is_action_pressed("ui_accept"))
 	
-	#implement wall running later, lol. If I crash into a walk, return to walking mode, which has cases for running into walls
-	if (is_pressing_wall() or !Input.is_action_pressed("sprint")):
-		state.movement_type = state.MOVEMENT_TYPE.WALK
-		return
+	if state.grounded:
+		#if we hit a wall on the ground or stop holding sprint on the ground, stop running
+		if (abs(state.current_vel[0]) < SPEED and\
+				!Input.is_action_pressed("sprint")
+			):
+			state.movement_type = state.MOVEMENT_TYPE.WALK
+			return
 	
 	var left := Input.is_action_pressed("ui_left")
 	var right := Input.is_action_pressed("ui_right")
@@ -159,14 +186,15 @@ func update_run(delta):
 	
 	state.desired_direction[0] = (-1 if left else 0) + (1 if right else 0)
 	
-	state.accelerate(
+	#don't apply horizontal acceleration in the air.
+	if state.grounded: state.accelerate(
 		0,
 		-RUN_SPEED, RUN_SPEED, 
 		RUN_ACCEL * RUN_DECEL_SCALE, RUN_ACCEL, 
 		delta
 	)
-	
-	state.accelerate(
+	#only apply vertical acceleration in the air
+	else: state.accelerate(
 		1,
 		-FALL_SPEED, JUMP_SPEED, 
 		FALL_ACCEL, FALL_ACCEL, 
