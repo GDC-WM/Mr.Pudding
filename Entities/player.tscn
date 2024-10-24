@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://c80c87qvuq4qf"]
+[gd_scene load_steps=6 format=3 uid="uid://c80c87qvuq4qf"]
 
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
 [ext_resource type="Texture2D" uid="uid://bgoy432y57vru" path="res://arrow.png" id="2_e7dio"]
 [ext_resource type="Script" path="res://Scripts/Player/PlayerAxisReader.gd" id="2_loc4f"]
+[ext_resource type="Texture2D" uid="uid://cb8euymm3m3cy" path="res://white_square_32x32.png" id="4_p8xh5"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_72tns"]
 size = Vector2(32, 32)
@@ -47,3 +48,9 @@ target_position = Vector2(50, 0)
 
 [node name="CastLatch" type="RayCast2D" parent="CharacterBody2D/Cast"]
 target_position = Vector2(-50, 50)
+
+[node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D"]
+modulate = Color(0, 0, 1, 1)
+texture = ExtResource("4_p8xh5")
