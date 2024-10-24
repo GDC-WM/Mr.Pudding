@@ -52,11 +52,3 @@ position = Vector2(2, 7)
 shape = SubResource("RectangleShape2D_grx6v")
 
 [node name="Player" parent="." instance=ExtResource("1_mhii7")]
-
-[node name="StaticBody2D7" type="StaticBody2D" parent="."]
-position = Vector2(813, 472)
-rotation = 0.851815
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D7"]
-position = Vector2(2, 7)
-shape = SubResource("RectangleShape2D_grx6v")

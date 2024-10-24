@@ -36,3 +36,14 @@ position = Vector2(29, 0)
 rotation = 1.57079
 scale = Vector2(0.03, 0.03)
 texture = ExtResource("2_e7dio")
+
+[node name="Cast" type="Node2D" parent="CharacterBody2D"]
+scale = Vector2(-1, 1)
+
+[node name="CastForward" type="RayCast2D" parent="CharacterBody2D/Cast"]
+target_position = Vector2(50, 0)
+
+[node name="CastDown" type="RayCast2D" parent="CharacterBody2D/Cast"]
+
+[node name="CastLatch" type="RayCast2D" parent="CharacterBody2D/Cast"]
+target_position = Vector2(-50, 50)

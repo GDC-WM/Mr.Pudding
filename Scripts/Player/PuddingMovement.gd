@@ -6,6 +6,8 @@ const SPEED := 500.0
 const GROUND_ACCEL := 6000.0
 const AIR_ACCEL := 3000.0
 
+const MAX_RAMP := 0.5
+
 #acceleration due to gravity, pixels per second squared
 const FALL_ACCEL := 4000.0
 const FASTFALL_ACCEL_MULTIPLIER := 1.5
@@ -30,14 +32,15 @@ const CAYOTE_TIME := 0.1
 
 const RUN_SPEED := 1500.0
 const RUN_ACCEL := 1000.0
-#the angle in radians that the player must be standing on to run up a ramp or wall
-const RAMP_ANGLE := 0.8
-
-func _ready():
-	floor_max_angle = RAMP_ANGLE * 0.5
 
 #the state of the player
 var state := PuddingState.new()
+
+@onready var casts := get_node("Cast")
+@onready var cast_down := get_node("Cast/CastDown")
+
+func _ready():
+	floor_max_angle = asin(MAX_RAMP)
 
 #calls every frame, delta is the frame time 
 func _process(delta):
@@ -51,26 +54,19 @@ func _process(delta):
 
 #update the physics body by telling it to move along "current_vel" using built-in functions
 func _physics_process(delta):
+	
 	velocity = state.get_velocity()
 	move_and_slide()
+	
+	casts.scale.x = signf(state.current_vel[0])
 
 func is_pressing_wall(wall:Vector2=get_wall_normal()):
 	return is_on_wall() && wall.dot(state.get_axis_vel(0)) < 0.0
-
-#call every frame to update the state's grounded variable
-func update_grounded():
-	state.grounded = is_on_floor()
 	
-	if state.grounded:
-		var n := get_floor_normal()
-		state.current_axis_vectors[0] = Vector2(-n.y, n.x)
-	else:
-		state.current_axis_vectors[0] = Vector2.RIGHT
 
 #call every frame to update the state's measure of coyote time and apply jump behaviors every frame
 #jump argument should be true if the player is inputting a jump
 func update_jump(delta, jump:bool):
-	update_grounded()
 	
 	if state.grounded:
 		state.cur_cayote = 0.0
@@ -114,6 +110,18 @@ func update_walk(delta):
 	var right := Input.is_action_pressed("ui_right")
 	var jump := Input.is_action_pressed("ui_accept")
 	
+	var p:Vector2 = cast_down.get_collision_point()
+	if cast_down.is_colliding() && state.grounded:
+		
+		var n:Vector2 = cast_down.get_collision_normal()
+
+		if (absf(n.x) < MAX_RAMP):
+			state.current_axis_vectors[0] = Vector2(-n.y, n.x)
+	
+		state.grounded = (position - p).y <= MAX_RAMP
+	else:
+		state.grounded = is_on_floor()
+	
 	update_jump(delta, jump)
 	
 	#check if the player is running into a wall by checking if they are checking a wall and walking into it
@@ -151,24 +159,10 @@ func update_walk(delta):
 		delta
 	)
 
-func should_run_ramp(ramp_normal:Vector2) -> bool:
-	return is_on_wall() and ((
-			absf(state.current_axis_vectors[1].angle_to(ramp_normal)) < RAMP_ANGLE
-		) or (
-			!state.grounded
-		))
-
 #after a dash the player is sprinting
 func update_run(delta):
 	
 	var wall := get_wall_normal()
-	var should_ramp := should_run_ramp(wall)
-	
-	if should_ramp: 
-		state.current_axis_vectors[0] = Vector2(-wall.y, wall.x)
-		up_direction = wall
-	else:
-		up_direction = Vector2.UP
 	
 	update_jump(delta, Input.is_action_pressed("ui_accept"))
 	
