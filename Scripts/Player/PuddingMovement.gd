@@ -6,7 +6,7 @@ const SPEED := 500.0
 const GROUND_ACCEL := 6000.0
 const AIR_ACCEL := 3000.0
 
-const MAX_RAMP := 0.5
+const MAX_RAMP := 0.395
 
 #acceleration due to gravity, pixels per second squared
 const FALL_ACCEL := 4000.0
@@ -58,15 +58,17 @@ func _physics_process(delta):
 	velocity = state.get_velocity()
 	move_and_slide()
 	
-	casts.scale.x = signf(state.current_vel[0])
+	casts.scale.x = signf(state.get_facing(0))
 
-func is_pressing_wall(wall:Vector2=get_wall_normal()):
-	return is_on_wall() && wall.dot(state.get_axis_vel(0)) < 0.0
-	
+func is_pushing(n:Vector2):
+	return absf(n.x) >= MAX_RAMP && state.get_facing(0) != signf(n.x)
 
 #call every frame to update the state's measure of coyote time and apply jump behaviors every frame
 #jump argument should be true if the player is inputting a jump
 func update_jump(delta, jump:bool):
+	
+	if get_slide_collision_count() == 0:
+		state.grounded = false
 	
 	if state.grounded:
 		state.cur_cayote = 0.0
@@ -111,21 +113,22 @@ func update_walk(delta):
 	var jump := Input.is_action_pressed("ui_accept")
 	
 	var p:Vector2 = cast_down.get_collision_point()
+	var n:Vector2 = cast_down.get_collision_normal()
 	if cast_down.is_colliding() && state.grounded:
-		
-		var n:Vector2 = cast_down.get_collision_normal()
-
-		if (absf(n.x) < MAX_RAMP):
+		if (signf(n.y) < 0.0 && absf(n.x) < MAX_RAMP):
 			state.current_axis_vectors[0] = Vector2(-n.y, n.x)
-	
-		state.grounded = (position - p).y <= MAX_RAMP
+			state.grounded = true
+		else:
+			state.current_axis_vectors[0] = Vector2.RIGHT
+			state.grounded = false
 	else:
 		state.grounded = is_on_floor()
+		state.current_axis_vectors[0] = Vector2.RIGHT
 	
 	update_jump(delta, jump)
 	
 	#check if the player is running into a wall by checking if they are checking a wall and walking into it
-	if (is_pressing_wall()):
+	if (is_pushing(n)):
 		state.desired_direction[0] = 0.0
 	else:
 		if Input.is_action_pressed("sprint") and state.grounded: 

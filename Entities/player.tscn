@@ -41,7 +41,7 @@ texture = ExtResource("2_e7dio")
 scale = Vector2(-1, 1)
 
 [node name="CastForward" type="RayCast2D" parent="CharacterBody2D/Cast"]
-target_position = Vector2(50, 0)
+target_position = Vector2(30, 0)
 
 [node name="CastDown" type="RayCast2D" parent="CharacterBody2D/Cast"]
 
