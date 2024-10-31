@@ -7,6 +7,7 @@ const GROUND_ACCEL := 6000.0
 const AIR_ACCEL := 3000.0
 
 const MAX_RAMP := 0.395
+const MAX_STEP := 215
 
 #acceleration due to gravity, pixels per second squared
 const FALL_ACCEL := 4000.0
@@ -67,19 +68,16 @@ func is_pushing(n:Vector2):
 #jump argument should be true if the player is inputting a jump
 func update_jump(delta, jump:bool):
 	
-	if get_slide_collision_count() == 0:
-		state.grounded = false
-	
 	if state.grounded:
 		state.cur_cayote = 0.0
 		state.hold_on_ground()
 	else:
 		state.cur_cayote += delta
+		
 	#if jumping, instantly hit jumping speed
 	if jump && state.cur_cayote < CAYOTE_TIME:
 		state.start_jump_on_ground(JUMP_SPEED)
 		print("jump")
-	
 	#if in the air, count towards the jump height and jump hang to see if the player should fall
 	elif !state.grounded:
 		if !jump:
@@ -101,6 +99,18 @@ func update_jump(delta, jump:bool):
 		
 		state.update_jump_height(delta)
 
+func check_slope_castdown(p, n):
+	if cast_down.is_colliding() && state.grounded:
+		if (((p.y - position.y) <= MAX_STEP || is_pushing(n)) && absf(n.x) < MAX_RAMP):
+			state.current_axis_vectors[0] = Vector2(-n.y, n.x)
+			state.grounded = true
+		else:
+			state.current_axis_vectors[0] = Vector2.RIGHT
+			state.grounded = false
+	else:
+		state.grounded = is_on_floor()
+		state.current_axis_vectors[0] = Vector2.RIGHT
+
 #take input from the player and apply it to state.desired_direction
 func update_walk(delta):
 	
@@ -114,16 +124,8 @@ func update_walk(delta):
 	
 	var p:Vector2 = cast_down.get_collision_point()
 	var n:Vector2 = cast_down.get_collision_normal()
-	if cast_down.is_colliding() && state.grounded:
-		if (signf(n.y) < 0.0 && absf(n.x) < MAX_RAMP):
-			state.current_axis_vectors[0] = Vector2(-n.y, n.x)
-			state.grounded = true
-		else:
-			state.current_axis_vectors[0] = Vector2.RIGHT
-			state.grounded = false
-	else:
-		state.grounded = is_on_floor()
-		state.current_axis_vectors[0] = Vector2.RIGHT
+	
+	check_slope_castdown(p, n)
 	
 	update_jump(delta, jump)
 	
@@ -182,6 +184,9 @@ func update_run(delta):
 	var jump := Input.is_action_pressed("ui_accept")
 	
 	state.desired_direction[0] = (-1 if left else 0) + (1 if right else 0)
+	
+	if (state.desired_direction[0] == 0 && state.current_vel[0] < SPEED):
+		state.movement_type = state.MOVEMENT_TYPE.WALK
 	
 	#don't apply horizontal acceleration in the air.
 	if state.grounded: state.accelerate(
