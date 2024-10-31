@@ -167,25 +167,20 @@ func update_walk(delta):
 #after a dash the player is sprinting
 func update_run(delta):
 	
-	var wall := get_wall_normal()
-	
-	update_jump(delta, Input.is_action_pressed("ui_accept"))
-	
-	if state.grounded:
-		#if we hit a wall on the ground or stop holding sprint on the ground, stop running
-		if (abs(state.current_vel[0]) < SPEED and\
-				!Input.is_action_pressed("sprint")
-			):
-			state.movement_type = state.MOVEMENT_TYPE.WALK
-			return
-	
 	var left := Input.is_action_pressed("ui_left")
 	var right := Input.is_action_pressed("ui_right")
 	var jump := Input.is_action_pressed("ui_accept")
 	
+	var p:Vector2 = cast_down.get_collision_point()
+	var n:Vector2 = cast_down.get_collision_normal()
+	
+	check_slope_castdown(p, n)
+	
+	update_jump(delta, jump)
+	
 	state.desired_direction[0] = (-1 if left else 0) + (1 if right else 0)
 	
-	if (state.desired_direction[0] == 0 && state.current_vel[0] < SPEED):
+	if (state.grounded && state.get_facing(0) != signf(state.current_vel[0]) && absf(state.current_vel[0]) < SPEED):
 		state.movement_type = state.MOVEMENT_TYPE.WALK
 	
 	#don't apply horizontal acceleration in the air.

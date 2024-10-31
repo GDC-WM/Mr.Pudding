@@ -1,8 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://c80c87qvuq4qf"]
+[gd_scene load_steps=8 format=3 uid="uid://c80c87qvuq4qf"]
 
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
-[ext_resource type="Texture2D" uid="uid://bgoy432y57vru" path="res://arrow.png" id="2_e7dio"]
 [ext_resource type="Script" path="res://Scripts/Player/PlayerAxisReader.gd" id="2_loc4f"]
+[ext_resource type="Texture2D" uid="uid://bgoy432y57vru" path="res://Sprites/arrow.png" id="3_y2gm5"]
+[ext_resource type="Script" path="res://Scripts/Player/MovementTypeListener.gd" id="4_xw0wx"]
+[ext_resource type="VideoStream" path="res://Sprites/Walking1-3626903535.ogv" id="5_n3bf7"]
+[ext_resource type="VideoStream" path="res://Sprites/camel-acegif-20-running-camel-2546995410.ogv" id="6_c0l1f"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_72tns"]
 size = Vector2(32, 32)
@@ -25,7 +28,7 @@ offset = 1.56981
 modulate = Color(0.568627, 0.709804, 0.337255, 1)
 position = Vector2(0, -28)
 scale = Vector2(0.03, 0.03)
-texture = ExtResource("2_e7dio")
+texture = ExtResource("3_y2gm5")
 
 [node name="Right" type="Node2D" parent="CharacterBody2D"]
 script = ExtResource("2_loc4f")
@@ -35,7 +38,7 @@ modulate = Color(0.937255, 0.509804, 0.498039, 1)
 position = Vector2(29, 0)
 rotation = 1.57079
 scale = Vector2(0.03, 0.03)
-texture = ExtResource("2_e7dio")
+texture = ExtResource("3_y2gm5")
 
 [node name="Cast" type="Node2D" parent="CharacterBody2D"]
 scale = Vector2(-1, 1)
@@ -47,3 +50,38 @@ target_position = Vector2(30, 0)
 
 [node name="CastLatch" type="RayCast2D" parent="CharacterBody2D/Cast"]
 target_position = Vector2(-50, 50)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("4_xw0wx")
+player_path = NodePath("../../CharacterBody2D")
+
+[node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="CanvasLayer/Control"]
+layout_mode = 1
+offset_right = 160.0
+offset_bottom = 144.0
+stream = ExtResource("5_n3bf7")
+autoplay = true
+loop = true
+
+[node name="VideoStreamPlayer2" type="VideoStreamPlayer" parent="CanvasLayer/Control"]
+visible = false
+layout_mode = 1
+offset_right = 40.0
+offset_bottom = 40.0
+autoplay = true
+expand = true
+loop = true
+
+[node name="VideoStreamPlayer3" type="VideoStreamPlayer" parent="CanvasLayer/Control"]
+visible = false
+layout_mode = 1
+offset_right = 205.0
+offset_bottom = 167.0
+stream = ExtResource("6_c0l1f")
+autoplay = true
+expand = true
+loop = true
