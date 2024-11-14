@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
 [ext_resource type="Texture2D" uid="uid://bgoy432y57vru" path="res://arrow.png" id="2_e7dio"]
 [ext_resource type="Script" path="res://Scripts/Player/PlayerAxisReader.gd" id="2_loc4f"]
-[ext_resource type="Texture2D" uid="uid://cb8euymm3m3cy" path="res://Tilesets/white_square_32x32.png" id="4_p8xh5"]
+[ext_resource type="Texture2D" uid="uid://buyi3mm62mf8k" path="res://Tilesets/white_square_32x32.png" id="4_p8xh5"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_72tns"]
 size = Vector2(30, 30)
