@@ -45,7 +45,6 @@ script = ExtResource("4_xw0wx")
 player_path = NodePath("../../CharacterBody2D")
 
 [node name="RichTextLabel" type="RichTextLabel" parent="CanvasLayer/Control"]
-layout_mode = 1
-offset_right = 698.0
-offset_bottom = 291.0
-bbcode_enabled = true
+layout_mode = 0
+offset_right = 196.0
+offset_bottom = 141.0
