@@ -1,8 +1,6 @@
-[gd_scene load_steps=8 format=3 uid="uid://c80c87qvuq4qf"]
+[gd_scene load_steps=6 format=3 uid="uid://c80c87qvuq4qf"]
 
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
-[ext_resource type="Script" path="res://Scripts/Player/PlayerAxisReader.gd" id="2_loc4f"]
-[ext_resource type="Texture2D" uid="uid://bgoy432y57vru" path="res://Sprites/arrow.png" id="3_y2gm5"]
 [ext_resource type="Script" path="res://Scripts/Player/MovementTypeListener.gd" id="4_xw0wx"]
 [ext_resource type="VideoStream" path="res://Sprites/Walking1-3626903535.ogv" id="5_n3bf7"]
 [ext_resource type="VideoStream" path="res://Sprites/camel-acegif-20-running-camel-2546995410.ogv" id="6_c0l1f"]
@@ -19,27 +17,6 @@ script = ExtResource("1_6col6")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
 shape = SubResource("RectangleShape2D_72tns")
 
-[node name="Up" type="Node2D" parent="CharacterBody2D"]
-script = ExtResource("2_loc4f")
-i = 1
-offset = 1.56981
-
-[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D/Up"]
-modulate = Color(0.568627, 0.709804, 0.337255, 1)
-position = Vector2(0, -28)
-scale = Vector2(0.03, 0.03)
-texture = ExtResource("3_y2gm5")
-
-[node name="Right" type="Node2D" parent="CharacterBody2D"]
-script = ExtResource("2_loc4f")
-
-[node name="Sprite2D2" type="Sprite2D" parent="CharacterBody2D/Right"]
-modulate = Color(0.937255, 0.509804, 0.498039, 1)
-position = Vector2(29, 0)
-rotation = 1.57079
-scale = Vector2(0.03, 0.03)
-texture = ExtResource("3_y2gm5")
-
 [node name="Cast" type="Node2D" parent="CharacterBody2D"]
 scale = Vector2(-1, 1)
 
@@ -49,7 +26,8 @@ target_position = Vector2(30, 0)
 [node name="CastDown" type="RayCast2D" parent="CharacterBody2D/Cast"]
 
 [node name="CastLatch" type="RayCast2D" parent="CharacterBody2D/Cast"]
-target_position = Vector2(-50, 50)
+position = Vector2(3, 16)
+target_position = Vector2(-28, 33)
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 

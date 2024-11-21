@@ -38,7 +38,8 @@ rotation = 1.12863
 shape = SubResource("WorldBoundaryShape2D_v2yi7")
 
 [node name="StaticBody2D2" type="StaticBody2D" parent="."]
-position = Vector2(345, 399)
+position = Vector2(347, 363)
+scale = Vector2(1.30508, 2.35714)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D2"]
 position = Vector2(2, 7)
@@ -52,3 +53,11 @@ position = Vector2(2, 7)
 shape = SubResource("RectangleShape2D_grx6v")
 
 [node name="Player" parent="." instance=ExtResource("1_mhii7")]
+
+[node name="StaticBody2D7" type="StaticBody2D" parent="."]
+position = Vector2(347, 363)
+scale = Vector2(1.30508, 2.35714)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D7"]
+position = Vector2(517.976, 82.7274)
+shape = SubResource("RectangleShape2D_grx6v")
