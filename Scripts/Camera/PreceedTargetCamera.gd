@@ -7,10 +7,10 @@ extends CharacterBody2D
 ##but should with colliders denoting level borders. 
 
 #pixels the camera will move ahead of its target, showing the player what's ahead of them
-const OFFSETPERUPS := Vector2(.3,.3)
+const OFFSETPERUPS := Vector2(.1,.1)
 
 #maximum pixels per second that the camera will move relative to the target
-const MAXSPEED := Vector2(7.0, 5.0)
+const MAXSPEED := Vector2(5.0, 3.0)
 
 #attached to the target to read their velocity
 var vreader:VelocityReader
