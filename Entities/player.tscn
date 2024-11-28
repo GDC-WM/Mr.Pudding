@@ -7,7 +7,7 @@
 size = Vector2(32, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_dhshc"]
-size = Vector2(32, 32)
+size = Vector2(30, 30)
 
 [node name="Player" type="Node2D"]
 position = Vector2(563, 192)
@@ -22,19 +22,26 @@ shape = SubResource("RectangleShape2D_72tns")
 [node name="Cast" type="Node2D" parent="CharacterBody2D"]
 scale = Vector2(-1, 1)
 
-[node name="CastForward" type="RayCast2D" parent="CharacterBody2D/Cast"]
-target_position = Vector2(30, 0)
-
-[node name="CastLatch" type="RayCast2D" parent="CharacterBody2D/Cast"]
-position = Vector2(3, 16)
-target_position = Vector2(-28, 33)
-
 [node name="CastDown" type="ShapeCast2D" parent="CharacterBody2D/Cast"]
 shape = SubResource("RectangleShape2D_dhshc")
 exclude_parent = false
-target_position = Vector2(0, 30)
+target_position = Vector2(0, 32)
+
+[node name="CastForward" type="ShapeCast2D" parent="CharacterBody2D/Cast"]
+shape = SubResource("RectangleShape2D_dhshc")
+exclude_parent = false
+target_position = Vector2(32, 0)
+
+[node name="CastLatch" type="ShapeCast2D" parent="CharacterBody2D/Cast"]
+shape = SubResource("RectangleShape2D_dhshc")
+exclude_parent = false
+target_position = Vector2(-32, 32)
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
+
+[node name="RunTimer" type="Timer" parent="CharacterBody2D"]
+one_shot = true
+autostart = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
