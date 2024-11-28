@@ -14,7 +14,6 @@ position = Vector2(563, 192)
 
 [node name="CharacterBody2D" type="CharacterBody2D" parent="."]
 collision_layer = 2
-motion_mode = 1
 script = ExtResource("1_6col6")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
@@ -34,6 +33,11 @@ exclude_parent = false
 target_position = Vector2(32, 0)
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
+
+[node name="CoyoteTimer" type="Timer" parent="CharacterBody2D"]
+wait_time = 0.25
+one_shot = true
+autostart = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
