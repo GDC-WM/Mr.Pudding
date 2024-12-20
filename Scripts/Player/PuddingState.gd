@@ -45,15 +45,23 @@ var wall_jump_storage := 0.0
 func last_tangent() -> Vector2:
 	return Vector2(-last_normal.y, last_normal.x)
 
-#try to land the player, assuming they are not grounded
-func try_ground(self_collision:KinematicCollision2D, max_floor_y:float):
-	#the player is in the air, only use their direct collisions
-	var c_norm = self_collision.get_normal() if self_collision else null
-	if c_norm && c_norm.y <= max_floor_y:
+func try_climb_on(normal:Vector2, max_floor_y:float, max_ramp:=INF) -> bool:
+	if (normal.y <= max_floor_y):
 		grounded = true
-		last_normal = c_norm
+		var result := (last_normal.is_zero_approx() || (last_normal - normal).length() <= max_ramp)
+		if result: last_normal = normal
+		return result
 	else:
 		grounded = false
+	return false
+
+#try to land the player, assuming they are not grounded
+func try_ground(self_collision:KinematicCollision2D, max_floor_y:float, max_ramp:=INF):
+	#the player is in the air, only use their direct collisions
+	var c_norm = self_collision.get_normal() if self_collision else null
+	if c_norm:
+		try_climb_on(c_norm, max_floor_y, max_ramp)
+	else: grounded = false
 
 #attempt to keep the player on the ground while they are in motion
 #supply collision data with the nearest point on the ground, the highest possible floor normal, and "stick_power," the speed with which the player attaches to the ground

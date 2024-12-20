@@ -28,7 +28,7 @@ const RUN_ACCEL := 500.0
 const STICK_POWER := 400.0
 
 #the max difference in the length between two normals that the player can climb while running
-const MAX_RAMP := 0.5
+const MAX_RAMP := 1.0
 
 #the state of the player
 var state := PuddingState.new()
@@ -136,27 +136,30 @@ func handle_walk(delta):
 
 func handle_run(delta):
 	
-	state.try_ground(get_last_slide_collision(), MAX_FLOOR_Y_RUN)
-		
+	#check if the player is grounded like in handle_walk, pulling them towards the ground if necessary
+	#however, the bound for being grounded in general is the more lenient one for running, which allows wall running to be sustained
+	state.try_ground(get_last_slide_collision(), MAX_FLOOR_Y_RUN, MAX_RAMP)
 	state.try_cast_down(get_last_highest_normal(cast_down), MAX_FLOOR_Y, STICK_POWER)
 
+	#double check if the player should be grounded. This is what adds wall-running
+	#first, check the terrain in front of them, all we care about is the normal
 	var result := get_last_closest_point(cast_forward)
 	var normal = result["normal"] if result.has("normal") else null
 	
-	if normal && normal.y <= MAX_FLOOR_Y_RUN:
-		state.last_normal = normal
-		state.v2 = -normal * STICK_POWER
-		state.grounded = true
+	#if the normal is in-range for wall running (i.e. not a ceiling), attach to it
+	#the state automatically computes a normal tangent that's used for movement, so this is all we have to do in theory
+	#but, in practice, we need to stick to the wall, too, or else the try_ground call above will fail on subsequent frames
+	if normal:
+		var result_2 := state.try_climb_on(normal, MAX_FLOOR_Y_RUN, MAX_RAMP)
+		if result_2:
+			state.v2 = -normal * STICK_POWER
 	
-	#no pausing
+	#check for a jump
+	update_jump(Input.is_action_pressed("ui_accept"), delta)
+	
 	if (state.movement_axis[0] == 0.0):
 		state.movement_axis[0] = state.facing[0]
 	
-	#if we want to jump, are grounded, and climbing a wall, the player should flip around until another direction key is pressed
-	
-	
-	update_jump(Input.is_action_pressed("ui_accept"), delta)
-
 	if state.grounded:
 		#if the player is grounded, walk along the slope
 		var t := state.last_tangent()
@@ -171,12 +174,17 @@ func handle_run(delta):
 		if state.v2[1] != clampf(state.v2[1], -FALL_SPEED, FALL_SPEED):
 			state.v2[1] = FALL_SPEED * signf(state.v2[1])
 	
+	#if the player stops pressing sprint at any time, return to walk mode
 	if !Input.is_action_pressed("sprint"):
 		state.run_speed = SPEED
 		state.movement_type = state.MOVEMENT_TYPE.WALK
 	
+	#increment the running speed to simulate acceleration over time while running
 	state.run_speed += RUN_ACCEL * delta
 	state.run_speed = clampf(state.run_speed, 0.0, RUN_SPEED)
+	
+	#TODO
+	#if, after all this mess, we're pushing against a wall *and* not climbing it, there should be some kind of bonk
 	
 
 func _physics_process(delta):
