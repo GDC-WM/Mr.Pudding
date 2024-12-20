@@ -15,24 +15,32 @@ func get_velocity() -> Vector2:
 
 var facing := Vector2.ONE
 var movement_axis := Vector2.ZERO
+var turning:Array[bool] = [false, false]
 
-func update_movement_axis(to:Vector2):
-	if (to.x != 0.0): facing.x = signf(to.x)
-	if (to.y != 0.0): facing.y = signf(to.y)
+func update_movement_axis(to:Vector2, can_turn:=true):
+	var new_facing = to.sign()
+	turning = [new_facing.x != facing.x, new_facing.y != facing.y]
+	if (!can_turn && (turning[0] || turning[1])):
+		return
+	if (to.x != 0.0):facing.x = new_facing.x
+	if (to.y != 0.0):facing.y = new_facing.y
+	
 	movement_axis = to
 
 var movement_type := MOVEMENT_TYPE.WALK
 
 var grounded := false
-var pushing_wall := false
 
-var last_normal = Vector2.UP
+var last_normal := Vector2.UP
 
 var jump_height := 0.0
 var jump_rising := false
 var coyote_time := 0.0
 
 var run_speed := 0.0
+
+#store the direction the player is flipped in while they are flipped after jumping off of a wall
+var wall_jump_storage := 0.0
 
 func last_tangent() -> Vector2:
 	return Vector2(-last_normal.y, last_normal.x)
@@ -84,8 +92,12 @@ func _to_string():
 	return "CATEGORICAL:\n" + \
 		"\t" + "grounded: " + draw_flag(grounded) + "\n" + \
 		"\t" + "movement mode: " + draw_m_type(movement_type) + "\n" + \
-	"CONTINUOUS:\n" + \
+	"PHYSICAL:\n" + \
 		"\t instant velocity: (" + draw_float(v1.x) + ", " + draw_float(v1.y) + ")\n" + \
 		"\t physics velocity: (" + draw_float(v2.x) + ", " + draw_float(v2.y) + ")\n" + \
 		"\t last normal: (" + draw_float(last_normal.x) + ", " + draw_float(last_normal.y) + ")\n" + \
-		"\t last tangent: (" + draw_float(last_tangent().x) + ", " + draw_float(last_tangent().y) + ")\n"
+		"\t last tangent: (" + draw_float(last_tangent().x) + ", " + draw_float(last_tangent().y) + ")\n" + \
+	"INPUT BASED:\n" + \
+		"\t movement axis: (" + draw_float(movement_axis.x) + ", " + draw_float(movement_axis.y) + ")\n" + \
+		"\t facing: (" + draw_float(facing.x) + ", " + draw_float(facing.y) + ")\n" + \
+		"\t wall jump storage: " + draw_float(wall_jump_storage) + "\n"

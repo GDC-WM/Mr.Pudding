@@ -27,6 +27,9 @@ const RUN_ACCEL := 500.0
 
 const STICK_POWER := 400.0
 
+#the max difference in the length between two normals that the player can climb while running
+const MAX_RAMP := 0.5
+
 #the state of the player
 var state := PuddingState.new()
 
@@ -93,7 +96,9 @@ func _process(delta):
 	state.update_movement_axis(Vector2(
 		Input.get_axis("ui_left", "ui_right"),
 		Input.get_axis("ui_down", "ui_up")
-	))
+	), 
+	(state.coyote_time > COYOTE_TIME || state.movement_type != state.MOVEMENT_TYPE.RUN) #if the player is grounded and running, don't let them turn around
+	)
 
 func handle_walk(delta):
 	
@@ -131,23 +136,24 @@ func handle_walk(delta):
 
 func handle_run(delta):
 	
-	#no pausing
-	if (state.movement_axis[0] == 0.0):
-		state.movement_axis[0] = state.facing[0]
+	state.try_ground(get_last_slide_collision(), MAX_FLOOR_Y_RUN)
 		
-	if state.grounded: 
-		state.try_cast_down(get_last_highest_normal(cast_down), MAX_FLOOR_Y, STICK_POWER)
-	
+	state.try_cast_down(get_last_highest_normal(cast_down), MAX_FLOOR_Y, STICK_POWER)
+
 	var result := get_last_closest_point(cast_forward)
 	var normal = result["normal"] if result.has("normal") else null
+	
 	if normal && normal.y <= MAX_FLOOR_Y_RUN:
 		state.last_normal = normal
 		state.v2 = -normal * STICK_POWER
 		state.grounded = true
-	#if we face away from the last wall, which was too steep to walk on, fall
-	#this feels better because walls have an easy escape, but floors are still floors
-	elif state.last_normal.y > MAX_FLOOR_Y && (state.last_normal * state.movement_axis).x < 0.0:
-		state.grounded = false
+	
+	#no pausing
+	if (state.movement_axis[0] == 0.0):
+		state.movement_axis[0] = state.facing[0]
+	
+	#if we want to jump, are grounded, and climbing a wall, the player should flip around until another direction key is pressed
+	
 	
 	update_jump(Input.is_action_pressed("ui_accept"), delta)
 
@@ -155,23 +161,20 @@ func handle_run(delta):
 		#if the player is grounded, walk along the slope
 		var t := state.last_tangent()
 		state.v1 = t * state.movement_axis[0] * state.run_speed
-		
-		#allow returning to walk instantaneously
-		if state.facing.x != state.movement_axis.x || \
-			!Input.is_action_pressed("sprint"):
-			
-			state.run_speed = SPEED
-			state.movement_type = state.MOVEMENT_TYPE.WALK
 	else:
 		#if the player is not grounded, still allow them freedom of horizontal movement
-		state.v1 = Vector2(state.movement_axis[0] * state.run_speed, 0.0)
+		state.v1 = Vector2(state.facing[0] * state.run_speed, 0.0)
 		
 		#accelerate the player towards the ground
 		state.v2[0] = 0.0
 		state.v2[1] += accelerate(state.v1[1], FALL_SPEED, FALL_ACCEL, delta)
 		if state.v2[1] != clampf(state.v2[1], -FALL_SPEED, FALL_SPEED):
 			state.v2[1] = FALL_SPEED * signf(state.v2[1])
-
+	
+	if !Input.is_action_pressed("sprint"):
+		state.run_speed = SPEED
+		state.movement_type = state.MOVEMENT_TYPE.WALK
+	
 	state.run_speed += RUN_ACCEL * delta
 	state.run_speed = clampf(state.run_speed, 0.0, RUN_SPEED)
 	
@@ -186,7 +189,6 @@ func _physics_process(delta):
 			handle_run(delta)
 	
 	velocity += state.get_velocity()
-	print(velocity)
 	move_and_slide()
 	velocity = Vector2.ZERO
 	casts.scale.x = state.facing.x
