@@ -27,6 +27,8 @@ const RUN_ACCEL := 500.0
 
 const STICK_POWER := 400.0
 
+const BOUNCE_POWER := 1000.0
+
 #the max difference in the length between two normals that the player can climb while running
 const MAX_RAMP := 1.0
 
@@ -97,7 +99,10 @@ func _process(delta):
 		Input.get_axis("ui_left", "ui_right"),
 		Input.get_axis("ui_down", "ui_up")
 	), 
-	(state.coyote_time > COYOTE_TIME || state.movement_type != state.MOVEMENT_TYPE.RUN) #if the player is grounded and running, don't let them turn around
+	#boolean flag prevents the facing parameter from updating
+	#if the player is grounded and running, don't let them turn around
+	(state.movement_type != state.MOVEMENT_TYPE.RUN) || \
+	(state.coyote_time > COYOTE_TIME) 
 	)
 
 func handle_walk(delta):
@@ -111,7 +116,7 @@ func handle_walk(delta):
 	if state.grounded: 
 		state.try_cast_down(get_last_highest_normal(cast_down), MAX_FLOOR_Y, STICK_POWER)
 	
-	update_jump(Input.is_action_pressed("ui_accept"), delta)
+	if (state.accepting_input): update_jump(Input.is_action_pressed("ui_accept"), delta)
 			
 	if state.grounded:
 		if state.movement_axis == Vector2.ZERO:
@@ -122,7 +127,7 @@ func handle_walk(delta):
 		state.v1 = t * state.movement_axis[0] * SPEED
 		#also allow a sprint to start instantly
 		if state.v1 != Vector2.ZERO && \
-			Input.is_action_pressed("sprint"):
+		Input.is_action_pressed("sprint"):
 			state.movement_type = state.MOVEMENT_TYPE.RUN
 	else:
 		#if the player is not grounded, still allow them freedom of horizontal movement
@@ -151,19 +156,26 @@ func handle_run(delta):
 	#but, in practice, we need to stick to the wall, too, or else the try_ground call above will fail on subsequent frames
 	if normal:
 		var result_2 := state.try_climb_on(normal, MAX_FLOOR_Y_RUN, MAX_RAMP)
-		if result_2:
+		if result_2 == state.CLIMB_RESULT.OK:
 			state.v2 = -normal * STICK_POWER
+		else:
+			#if we tried to climb on a wall, but failed to, bounce off
+			state.v2 = (-state.facing) * BOUNCE_POWER
+			state.movement_type = state.MOVEMENT_TYPE.BOUNCE
+			update_jump(true, delta)
+			return
 	
 	#check for a jump
 	update_jump(Input.is_action_pressed("ui_accept"), delta)
 	
+	#print("locking run direction with facing: ", state.facing)
 	if (state.movement_axis[0] == 0.0):
 		state.movement_axis[0] = state.facing[0]
 	
 	if state.grounded:
 		#if the player is grounded, walk along the slope
 		var t := state.last_tangent()
-		state.v1 = t * state.movement_axis[0] * state.run_speed
+		state.v1 = t * state.facing[0] * state.run_speed
 	else:
 		#if the player is not grounded, still allow them freedom of horizontal movement
 		state.v1 = Vector2(state.facing[0] * state.run_speed, 0.0)
@@ -182,10 +194,26 @@ func handle_run(delta):
 	#increment the running speed to simulate acceleration over time while running
 	state.run_speed += RUN_ACCEL * delta
 	state.run_speed = clampf(state.run_speed, 0.0, RUN_SPEED)
+
+func handle_bounce(delta):
+	var store_facing := state.facing
+	state.movement_axis = -store_facing
 	
-	#TODO
-	#if, after all this mess, we're pushing against a wall *and* not climbing it, there should be some kind of bonk
+	#emulate walking, but don't record new inputs (for starting runs, drop dashes, etc.)
+	#this will update the player's position based on the movement below, and also detect if they land
+	handle_walk(delta)
 	
+	#once the player lands during a bounce, return to walk mode and restore the player's inputs
+	if state.grounded:
+		state.movement_type = state.MOVEMENT_TYPE.WALK
+		return
+	
+	#otherwise, restore the player's facing so they continue moving against it on the next step
+	state.facing = store_facing
+	
+	#assert that the player does not leave the bounce state, and that the running speed is reset
+	state.run_speed = SPEED
+	state.movement_type = state.MOVEMENT_TYPE.BOUNCE
 
 func _physics_process(delta):
 	
@@ -195,6 +223,8 @@ func _physics_process(delta):
 			handle_walk(delta)
 		state.MOVEMENT_TYPE.RUN:
 			handle_run(delta)
+		state.MOVEMENT_TYPE.BOUNCE:
+			handle_bounce(delta)
 	
 	velocity += state.get_velocity()
 	move_and_slide()

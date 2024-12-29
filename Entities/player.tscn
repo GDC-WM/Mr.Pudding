@@ -31,7 +31,7 @@ target_position = Vector2(0, 32)
 [node name="CastForward" type="ShapeCast2D" parent="CharacterBody2D/Cast"]
 shape = SubResource("RectangleShape2D_dhshc")
 exclude_parent = false
-target_position = Vector2(32, 0)
+target_position = Vector2(11, 3)
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
 
