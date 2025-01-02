@@ -4,7 +4,8 @@ class_name PuddingState
 enum MOVEMENT_TYPE {
 	WALK,
 	RUN,
-	BOUNCE
+	BOUNCE,
+	DROP
 }
 
 #v1 is "instant" velocity and v2 is "physics" velocity
@@ -109,6 +110,7 @@ func draw_m_type(m:MOVEMENT_TYPE) -> String:
 		MOVEMENT_TYPE.WALK: return "[color=cyan]WALK[/color]"
 		MOVEMENT_TYPE.RUN: return "[color=orange]RUN[/color]"
 		MOVEMENT_TYPE.BOUNCE: return "[color=pink]BOUNCE[/color]"
+		MOVEMENT_TYPE.DROP: return "[color=green]DROP[/color]"
 	return ""
 	
 
@@ -121,6 +123,7 @@ func _to_string():
 		"\t physics velocity: (" + draw_float(v2.x) + ", " + draw_float(v2.y) + ")\n" + \
 		"\t last normal: (" + draw_float(last_normal.x) + ", " + draw_float(last_normal.y) + ")\n" + \
 		"\t last tangent: (" + draw_float(last_tangent().x) + ", " + draw_float(last_tangent().y) + ")\n" + \
+		"\t run speed: " + draw_float(run_speed) + "\n" + \
 	"INPUT BASED:\n" + \
 		"\t movement axis: (" + draw_float(movement_axis.x) + ", " + draw_float(movement_axis.y) + ")\n" + \
 		"\t facing: (" + draw_float(facing.x) + ", " + draw_float(facing.y) + ")\n" + \

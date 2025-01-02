@@ -24,6 +24,7 @@ const RUN_SPEED := 2000.0
 const MAX_FLOOR_Y_RUN := 0.0
 
 const RUN_ACCEL := 500.0
+const DROP_ACCEL := 1500.0
 
 const STICK_POWER := 400.0
 
@@ -126,8 +127,7 @@ func handle_walk(delta):
 		var t := state.last_tangent()
 		state.v1 = t * state.movement_axis[0] * SPEED
 		#also allow a sprint to start instantly
-		if state.v1 != Vector2.ZERO && \
-		Input.is_action_pressed("sprint"):
+		if Input.is_action_pressed("sprint"):
 			state.movement_type = state.MOVEMENT_TYPE.RUN
 	else:
 		#if the player is not grounded, still allow them freedom of horizontal movement
@@ -138,6 +138,9 @@ func handle_walk(delta):
 		state.v2[1] += accelerate(state.v1[1], FALL_SPEED, FALL_ACCEL, delta)
 		if state.v2[1] != clampf(state.v2[1], -FALL_SPEED, FALL_SPEED):
 			state.v2[1] = FALL_SPEED * signf(state.v2[1])
+		
+		if Input.is_action_pressed("sprint"):
+			state.movement_type = state.MOVEMENT_TYPE.DROP
 
 func handle_run(delta):
 	
@@ -215,6 +218,18 @@ func handle_bounce(delta):
 	state.run_speed = SPEED
 	state.movement_type = state.MOVEMENT_TYPE.BOUNCE
 
+func handle_drop(delta):
+	
+	state.run_speed += DROP_ACCEL * delta
+	state.run_speed = clampf(state.run_speed, SPEED, RUN_SPEED)
+	
+	handle_walk(delta)
+	
+	if (state.grounded):
+		state.movement_type = state.MOVEMENT_TYPE.RUN
+	else:
+		state.movement_type = state.MOVEMENT_TYPE.DROP
+
 func _physics_process(delta):
 	
 	#change behavior based on the movement mode
@@ -225,6 +240,8 @@ func _physics_process(delta):
 			handle_run(delta)
 		state.MOVEMENT_TYPE.BOUNCE:
 			handle_bounce(delta)
+		state.MOVEMENT_TYPE.DROP:
+			handle_drop(delta)
 	
 	velocity += state.get_velocity()
 	move_and_slide()
