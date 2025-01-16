@@ -2,6 +2,7 @@ extends Object
 class_name PuddingState
 
 enum MOVEMENT_TYPE {
+	HACK,
 	WALK,
 	RUN,
 	BOUNCE,
@@ -35,6 +36,11 @@ func update_movement_axis(to:Vector2, can_turn:=true):
 	movement_axis = to
 
 var movement_type := MOVEMENT_TYPE.WALK
+var last_movement_type := MOVEMENT_TYPE.WALK
+
+func update_movement_type(to:MOVEMENT_TYPE):
+	last_movement_type = movement_type
+	movement_type = to
 
 var grounded := false
 
@@ -46,8 +52,7 @@ var jump_rising := false
 var coyote_time := 0.0
 
 var run_speed := 0.0
-
-var accepting_input := true
+var drop_boost_count := 0
 
 func last_tangent() -> Vector2:
 	return Vector2(-last_normal.y, last_normal.x)
@@ -82,7 +87,7 @@ func try_ground(self_collision:KinematicCollision2D, max_floor_y:float, max_ramp
 #attempt to keep the player on the ground while they are in motion
 #supply collision data with the nearest point on the ground, the highest possible floor normal, and "stick_power," the speed with which the player attaches to the ground
 func try_cast_down(cast_down_collision:Dictionary, max_floor_y:float, stick_power:float):
-	var normal:Vector2 = cast_down_collision["normal"] if cast_down_collision.has("normal") else null
+	var normal = cast_down_collision["normal"] if cast_down_collision.has("normal") else null
 	
 	if normal && normal.y <= max_floor_y:
 		last_normal = normal
@@ -91,6 +96,29 @@ func try_cast_down(cast_down_collision:Dictionary, max_floor_y:float, stick_powe
 	#if they are not standing over anything, launch them back into the air
 	else:
 		grounded = false
+
+func try_drop(sprint:bool, min_drop_fall_vel:float=0.0) -> bool:
+	if sprint && v2[1] >= min_drop_fall_vel:
+		movement_type = MOVEMENT_TYPE.DROP
+		return true
+	return false
+
+func try_increment_drop():
+	if movement_type != MOVEMENT_TYPE.DROP: return false
+	drop_boost_count += 1
+	return true
+
+func release_drop(drop_boost:float, max_run_speed:float):
+	increment_run(drop_boost * drop_boost_count, max_run_speed)
+
+func increment_run(delta:float, max_run_speed:float):
+	run_speed += delta
+	run_speed = clampf(run_speed, 0.0, max_run_speed)
+
+func freefall(delta:float, max_fall_speed:float):
+	v2[0] = 0.0
+	v2[1] += delta
+	v2[1] = clampf(v2[1], -max_fall_speed, max_fall_speed)
 
 #draw different types of state variables with nice BBCode
 func draw_flag(x:bool) -> String:
@@ -127,4 +155,4 @@ func _to_string():
 	"INPUT BASED:\n" + \
 		"\t movement axis: (" + draw_float(movement_axis.x) + ", " + draw_float(movement_axis.y) + ")\n" + \
 		"\t facing: (" + draw_float(facing.x) + ", " + draw_float(facing.y) + ")\n" + \
-		"\t accepting input: " + draw_float(accepting_input) + "\n"
+		"\t drop boosts: (" + draw_float(drop_boost_count) + ")\n"

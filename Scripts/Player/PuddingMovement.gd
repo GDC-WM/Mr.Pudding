@@ -24,7 +24,8 @@ const RUN_SPEED := 2000.0
 const MAX_FLOOR_Y_RUN := 0.0
 
 const RUN_ACCEL := 500.0
-const DROP_ACCEL := 1500.0
+
+const DROP_BOOST := 500.0
 
 const STICK_POWER := 400.0
 
@@ -40,8 +41,11 @@ var state := PuddingState.new()
 @onready var cast_down:ShapeCast2D = get_node("Cast/CastDown")
 @onready var cast_forward:ShapeCast2D = get_node("Cast/CastForward")
 
+@onready var drop_timer:Timer = get_node("DropTimer")
+
 func _ready():
 	state.run_speed = SPEED #when we do eventually start running, start at the walk speed
+	drop_timer.timeout.connect(state.try_increment_drop) #whenever the drop timer runs out, try to add a drop charge
 
 func accelerate(from:float, to:float, accel:float, delta:float) -> float:
 	return from + signf(to - from) * delta * accel
@@ -98,13 +102,23 @@ func update_jump(jump:bool, delta:float):
 func _process(delta):
 	state.update_movement_axis(Vector2(
 		Input.get_axis("ui_left", "ui_right"),
-		Input.get_axis("ui_down", "ui_up")
+		Input.get_axis("ui_up", "ui_down")
 	), 
 	#boolean flag prevents the facing parameter from updating
 	#if the player is grounded and running, don't let them turn around
 	(state.movement_type != state.MOVEMENT_TYPE.RUN) || \
 	(state.coyote_time > COYOTE_TIME) 
 	)
+	
+	#let the player fly as a debug utitlity
+	if (Input.is_action_just_pressed("fly")):
+		if state.movement_type == state.MOVEMENT_TYPE.HACK:
+			state.update_movement_type(state.MOVEMENT_TYPE.WALK)
+		else:
+			state.update_movement_type(state.MOVEMENT_TYPE.HACK)
+
+func handle_hack(delta):
+	state.v1 = state.movement_axis * SPEED
 
 func handle_walk(delta):
 	
@@ -117,7 +131,7 @@ func handle_walk(delta):
 	if state.grounded: 
 		state.try_cast_down(get_last_highest_normal(cast_down), MAX_FLOOR_Y, STICK_POWER)
 	
-	if (state.accepting_input): update_jump(Input.is_action_pressed("ui_accept"), delta)
+	update_jump(Input.is_action_pressed("ui_accept"), delta)
 			
 	if state.grounded:
 		if state.movement_axis == Vector2.ZERO:
@@ -128,19 +142,15 @@ func handle_walk(delta):
 		state.v1 = t * state.movement_axis[0] * SPEED
 		#also allow a sprint to start instantly
 		if Input.is_action_pressed("sprint"):
-			state.movement_type = state.MOVEMENT_TYPE.RUN
+			state.update_movement_type(state.MOVEMENT_TYPE.RUN)
 	else:
 		#if the player is not grounded, still allow them freedom of horizontal movement
 		state.v1 = Vector2(state.movement_axis[0] * SPEED, 0.0)
 		
 		#accelerate the player towards the ground
-		state.v2[0] = 0.0
-		state.v2[1] += accelerate(state.v1[1], FALL_SPEED, FALL_ACCEL, delta)
-		if state.v2[1] != clampf(state.v2[1], -FALL_SPEED, FALL_SPEED):
-			state.v2[1] = FALL_SPEED * signf(state.v2[1])
+		state.freefall(accelerate(state.v1[1], FALL_SPEED, FALL_ACCEL, delta), FALL_SPEED)
 		
-		if Input.is_action_pressed("sprint"):
-			state.movement_type = state.MOVEMENT_TYPE.DROP
+		state.try_drop(Input.is_action_pressed("sprint"))
 
 func handle_run(delta):
 	
@@ -164,16 +174,12 @@ func handle_run(delta):
 		else:
 			#if we tried to climb on a wall, but failed to, bounce off
 			state.v2 = (-state.facing) * BOUNCE_POWER
-			state.movement_type = state.MOVEMENT_TYPE.BOUNCE
+			state.update_movement_type(state.MOVEMENT_TYPE.BOUNCE)
 			update_jump(true, delta)
 			return
 	
 	#check for a jump
 	update_jump(Input.is_action_pressed("ui_accept"), delta)
-	
-	#print("locking run direction with facing: ", state.facing)
-	if (state.movement_axis[0] == 0.0):
-		state.movement_axis[0] = state.facing[0]
 	
 	if state.grounded:
 		#if the player is grounded, walk along the slope
@@ -184,19 +190,17 @@ func handle_run(delta):
 		state.v1 = Vector2(state.facing[0] * state.run_speed, 0.0)
 		
 		#accelerate the player towards the ground
-		state.v2[0] = 0.0
-		state.v2[1] += accelerate(state.v1[1], FALL_SPEED, FALL_ACCEL, delta)
-		if state.v2[1] != clampf(state.v2[1], -FALL_SPEED, FALL_SPEED):
-			state.v2[1] = FALL_SPEED * signf(state.v2[1])
+		state.freefall(accelerate(state.v1[1], FALL_SPEED, FALL_ACCEL, delta), FALL_SPEED)
+		
+		state.try_drop(Input.is_action_pressed("sprint"))
 	
 	#if the player stops pressing sprint at any time, return to walk mode
 	if !Input.is_action_pressed("sprint"):
 		state.run_speed = SPEED
-		state.movement_type = state.MOVEMENT_TYPE.WALK
+		state.update_movement_type(state.MOVEMENT_TYPE.WALK)
 	
 	#increment the running speed to simulate acceleration over time while running
-	state.run_speed += RUN_ACCEL * delta
-	state.run_speed = clampf(state.run_speed, 0.0, RUN_SPEED)
+	if state.grounded: state.increment_run(RUN_ACCEL * delta, RUN_SPEED)
 
 func handle_bounce(delta):
 	var store_facing := state.facing
@@ -208,7 +212,7 @@ func handle_bounce(delta):
 	
 	#once the player lands during a bounce, return to walk mode and restore the player's inputs
 	if state.grounded:
-		state.movement_type = state.MOVEMENT_TYPE.WALK
+		state.update_movement_type(state.MOVEMENT_TYPE.WALK)
 		return
 	
 	#otherwise, restore the player's facing so they continue moving against it on the next step
@@ -216,17 +220,42 @@ func handle_bounce(delta):
 	
 	#assert that the player does not leave the bounce state, and that the running speed is reset
 	state.run_speed = SPEED
-	state.movement_type = state.MOVEMENT_TYPE.BOUNCE
+	state.update_movement_type(state.MOVEMENT_TYPE.BOUNCE)
 
 func handle_drop(delta):
 	
-	state.run_speed += DROP_ACCEL * delta
-	state.run_speed = clampf(state.run_speed, SPEED, RUN_SPEED)
+	#when the player presses run in the drop phase, start a timeout to give them a drop charge
+	#the timing is configured by the Timer in the player's scene tree, and _ready connects it's timeout signal to the function for adding a drop charge
+	if Input.is_action_pressed("sprint") && drop_timer.is_stopped():
+		drop_timer.start()
+	#if the player releases run, reset the timer
+	elif !Input.is_action_pressed("sprint") && !drop_timer.is_stopped():
+		drop_timer.start() #this is the only way I know to restart a timer
+		drop_timer.stop() #then you need to do this to prevent it from continuing
 	
-	handle_walk(delta)
+	#Simulate a run to get some control in the air
+	#This causes the side effect of pushing the player forward, 
+	#even if they came here from a walk, but I'm ok with that.
+	#We also need to conserve v2, since the run might transition to a bounce, 
+	#which adds horizontal momentum that is unwanted in this case
+	var old_v2 = state.v2
+	handle_run(delta)
+	if (state.movement_type == state.MOVEMENT_TYPE.BOUNCE): state.v2 = old_v2
 	
+	#if the player is grounded, they must leave the drop state
 	if (state.grounded):
-		state.movement_type = state.MOVEMENT_TYPE.RUN
+		
+		#if they exit into a run, we release stored dashes
+		if Input.is_action_pressed("sprint"):
+			#this function applies the drop_boost_count to the run_speed
+			state.release_drop(DROP_BOOST, RUN_SPEED)
+			state.movement_type = state.MOVEMENT_TYPE.RUN
+		else:
+			state.run_speed = SPEED
+			state.movement_type = state.MOVEMENT_TYPE.WALK
+			return
+		
+		state.drop_boost_count = 0
 	else:
 		state.movement_type = state.MOVEMENT_TYPE.DROP
 
@@ -234,6 +263,8 @@ func _physics_process(delta):
 	
 	#change behavior based on the movement mode
 	match state.movement_type:
+		state.MOVEMENT_TYPE.HACK:
+			handle_hack(delta)
 		state.MOVEMENT_TYPE.WALK:
 			handle_walk(delta)
 		state.MOVEMENT_TYPE.RUN:
