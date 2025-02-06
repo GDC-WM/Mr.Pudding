@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://c80c87qvuq4qf"]
+[gd_scene load_steps=6 format=3 uid="uid://c80c87qvuq4qf"]
 
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
+[ext_resource type="PackedScene" uid="uid://n02gk23fbgp1" path="res://Entities/entity_health.tscn" id="2_fcewq"]
 [ext_resource type="Script" path="res://Scripts/Player/MovementTypeListener.gd" id="4_xw0wx"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_72tns"]
@@ -55,3 +56,11 @@ bbcode_enabled = true
 fit_content = true
 scroll_active = false
 autowrap_mode = 0
+
+[node name="EntityHealth" parent="CanvasLayer/Control" instance=ExtResource("2_fcewq")]
+visible = true
+offset_left = 563.0
+offset_top = 192.0
+offset_right = 567.0
+offset_bottom = 219.0
+entity_path = NodePath("../../..")
