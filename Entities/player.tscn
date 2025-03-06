@@ -1,41 +1,57 @@
-[gd_scene load_steps=7 format=3 uid="uid://c80c87qvuq4qf"]
+[gd_scene load_steps=5 format=3 uid="uid://c80c87qvuq4qf"]
 
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
-[ext_resource type="PackedScene" uid="uid://n02gk23fbgp1" path="res://Entities/entity_health.tscn" id="2_fcewq"]
-[ext_resource type="PackedScene" uid="uid://vkpdurgqmsfo" path="res://Entities/entity_attacker_placeholder.tscn" id="3_dq3xl"]
-[ext_resource type="Script" path="res://Scripts/Entities/EntityHurtbox.gd" id="4_dlh3p"]
+[ext_resource type="Script" path="res://Scripts/Player/MovementTypeListener.gd" id="4_xw0wx"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_72tns"]
 size = Vector2(32, 32)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_rvhrw"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_dhshc"]
+size = Vector2(30, 30)
 
 [node name="Player" type="Node2D"]
 position = Vector2(563, 192)
 
 [node name="CharacterBody2D" type="CharacterBody2D" parent="."]
-collision_mask = 253
+collision_layer = 2
+motion_mode = 1
 script = ExtResource("1_6col6")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
 shape = SubResource("RectangleShape2D_72tns")
 
-[node name="EntityHealth" parent="CharacterBody2D" instance=ExtResource("2_fcewq")]
-visible = true
-offset_left = -75.0
-offset_top = -47.0
-offset_right = 76.0
-offset_bottom = -31.0
+[node name="Cast" type="Node2D" parent="CharacterBody2D"]
+scale = Vector2(-1, 1)
 
-[node name="Attacker" parent="CharacterBody2D" instance=ExtResource("3_dq3xl")]
-collision_layer = 253
-collision_mask = 253
+[node name="CastDown" type="ShapeCast2D" parent="CharacterBody2D/Cast"]
+shape = SubResource("RectangleShape2D_dhshc")
+exclude_parent = false
+target_position = Vector2(0, 32)
 
-[node name="Hurtbox" type="CharacterBody2D" parent="CharacterBody2D"]
-collision_layer = 2
-collision_mask = 2
-script = ExtResource("4_dlh3p")
+[node name="CastForward" type="ShapeCast2D" parent="CharacterBody2D/Cast"]
+shape = SubResource("RectangleShape2D_dhshc")
+exclude_parent = false
+target_position = Vector2(11, 3)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D/Hurtbox"]
-shape = SubResource("RectangleShape2D_rvhrw")
-debug_color = Color(0, 0.619608, 0.552941, 0.419608)
+[node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
+
+[node name="DropTimer" type="Timer" parent="CharacterBody2D"]
+wait_time = 0.25
+one_shot = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("4_xw0wx")
+player_path = NodePath("../../CharacterBody2D")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="CanvasLayer/Control"]
+layout_mode = 1
+offset_right = 698.0
+offset_bottom = 291.0
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 0

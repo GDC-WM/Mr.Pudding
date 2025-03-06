@@ -1,112 +1,158 @@
 extends Object
 class_name PuddingState
 
-#the current movement axes of the player
-#	change the value of one of these axes to change which way the player will move 
-#	add an axis to give the player a new way to move
-#
-#0: horizontal
-#1: vertical
-#
-#current_vel, desired_direction, last_desired_direction, and direction_changed all use the same indexing scheme
-var current_axis_vectors:PackedVector2Array = [Vector2.RIGHT, Vector2.UP]
+enum MOVEMENT_TYPE {
+	HACK,
+	WALK,
+	RUN,
+	BOUNCE,
+	DROP
+}
 
-#the current velocity of the player along each axis in current_axis_vectors
-var current_vel:PackedFloat64Array = [0.0, 0.0]
+#v1 is "instant" velocity and v2 is "physics" velocity
+#on any given physics tick, the player should move the sum of these two
+var v1 := Vector2.ZERO
+var v2 := Vector2.ZERO
+func get_velocity() -> Vector2:
+	return v1 + v2
 
-#the direction the player wants to move along each axis in current_axis_vectors
-var desired_direction:PackedFloat64Array = [0.0, 0.0]
-#the desired directions on the last frame
-var last_desired_direction:PackedFloat64Array = [0.0, 0.0]
-#whether or not the signs of last_desired_direction are different from desired_direction
-var direction_changed:Array[bool] = [false, false]
+#the direction the player is facing, vertical direction currently means very little
+var facing := Vector2.ONE
+var movement_axis := Vector2.ZERO
+#the value of movement_axis before the last call of update_movement_axis
+var last_movement_axis := Vector2.ZERO
 
-#whether or not the player is on the ground
+var turning:Array[bool] = [false, false]
+
+func update_movement_axis(to:Vector2, can_turn:=true):
+	var new_facing = to.sign()
+	turning = [new_facing.x != facing.x, new_facing.y != facing.y]
+	if (!can_turn && (turning[0] || turning[1])):
+		return
+	if (to.x != 0.0):facing.x = new_facing.x
+	if (to.y != 0.0):facing.y = new_facing.y
+	
+	last_movement_axis = movement_axis
+	movement_axis = to
+
+var movement_type := MOVEMENT_TYPE.WALK
+var last_movement_type := MOVEMENT_TYPE.WALK
+
+func update_movement_type(to:MOVEMENT_TYPE):
+	last_movement_type = movement_type
+	movement_type = to
+
 var grounded := false
 
-#the height and hang time of the player's current jump, used to calculate if the player should continue rising or fall
-var jump_height := INF
-var jump_hang := INF
+#the normal the last time the player was grounded
+var last_normal := Vector2.UP
 
-#the current cayote time used by the player
-var cur_cayote := 0.0
+var jump_height := 0.0
+var jump_rising := false
+var coyote_time := 0.0
 
-#intended to be called every frame to keep last_desired_direction and direction_changed updated
-func update(delta):
-	for i in desired_direction.size():
-		direction_changed[i] = last_desired_direction[i] != desired_direction[i]
-	last_desired_direction = desired_direction
+var run_speed := 0.0
+var drop_boost_count := 0
 
-#the current velocity accumulated from the current velocity along each movement axis
-func get_velocity() -> Vector2:
-	var vel := Vector2.ZERO
-	for i in current_vel.size():
-		vel += current_axis_vectors[i] * current_vel[i]
-	return vel
+func last_tangent() -> Vector2:
+	return Vector2(-last_normal.y, last_normal.x)
 
-#accelerate the player along one of their movement axes
-func accelerate(along:int, min:float, max:float, deaccel:float, accel:float, delta:float):
-	current_vel[along] = accelerate_component(
-		current_vel[along], 
-		desired_direction[along], 
-		min, max, deaccel, accel, delta
-	)
+enum CLIMB_RESULT {
+	OK = 0,
+	MAX_RAMP_EXCEEDED,
+	MAX_FLOOR_EXCEEDED
+}
 
-#internal acceleration function
-#pure function, works for any float and does not effect the movement axes on its own
-func accelerate_component(from:float, axis:float, min:float, max:float, deaccel:float, accel:float, delta:float) -> float:
-	var d := signf(axis)
-	var a := accel if d == 1.0 else deaccel
+func try_climb_on(normal:Vector2, max_floor_y:float, max_ramp:=INF) -> CLIMB_RESULT:
+	if (normal.y <= max_floor_y):
+		var result := !grounded || ((last_normal - normal).length() <= max_ramp)
+		#print(!grounded, ", ", ((last_normal - normal).length() <= max_ramp))
+		if result: 
+			grounded = true
+			last_normal = normal
+			return CLIMB_RESULT.OK
+		return CLIMB_RESULT.MAX_RAMP_EXCEEDED
+	else:
+		grounded = false
+		return CLIMB_RESULT.MAX_FLOOR_EXCEEDED
+
+#try to land the player, assuming they are not grounded
+func try_ground(self_collision:KinematicCollision2D, max_floor_y:float, max_ramp:=INF):
+	#the player is in the air, only use their direct collisions
+	var c_norm = self_collision.get_normal() if self_collision else null
+	if c_norm:
+		try_climb_on(c_norm, max_floor_y, max_ramp)
+	else: grounded = false
+
+#attempt to keep the player on the ground while they are in motion
+#supply collision data with the nearest point on the ground, the highest possible floor normal, and "stick_power," the speed with which the player attaches to the ground
+func try_cast_down(cast_down_collision:Dictionary, max_floor_y:float, stick_power:float):
+	var normal = cast_down_collision["normal"] if cast_down_collision.has("normal") else null
 	
-	if (d == 0.0): d = -signf(from) #accelerate towards zero if the axis is nuetral
+	if normal && normal.y <= max_floor_y:
+		last_normal = normal
+		#pull the player towards the ground
+		v2 = -normal * stick_power
+	#if they are not standing over anything, launch them back into the air
+	else:
+		grounded = false
+
+func try_drop(sprint:bool, min_drop_fall_vel:float=0.0) -> bool:
+	if sprint && v2[1] >= min_drop_fall_vel:
+		movement_type = MOVEMENT_TYPE.DROP
+		return true
+	return false
+
+func try_increment_drop():
+	if movement_type != MOVEMENT_TYPE.DROP: return false
+	drop_boost_count += 1
+	return true
+
+func release_drop(drop_boost:float, max_run_speed:float):
+	increment_run(drop_boost * drop_boost_count, max_run_speed)
+
+func increment_run(delta:float, max_run_speed:float):
+	run_speed += delta
+	run_speed = clampf(run_speed, 0.0, max_run_speed)
+
+func freefall(delta:float, max_fall_speed:float):
+	v2[0] = 0.0
+	v2[1] += delta
+	v2[1] = clampf(v2[1], -max_fall_speed, max_fall_speed)
+
+#draw different types of state variables with nice BBCode
+func draw_flag(x:bool) -> String:
+	return "[color=" + ("green" if x else "red") + "]" + str(x) + "[/color]"
+
+func draw_float(x:float) -> String:
+	var color := "yellow"
+	var d := signf(x)
+	if (d == 1):
+		color = "green"
+	elif (d == -1):
+		color = "red"
+	return "[color=" + color + "]" + str(x) + "[/color]"
+
+func draw_m_type(m:MOVEMENT_TYPE) -> String:
+	match m:
+		MOVEMENT_TYPE.WALK: return "[color=cyan]WALK[/color]"
+		MOVEMENT_TYPE.RUN: return "[color=orange]RUN[/color]"
+		MOVEMENT_TYPE.BOUNCE: return "[color=pink]BOUNCE[/color]"
+		MOVEMENT_TYPE.DROP: return "[color=green]DROP[/color]"
+	return ""
 	
-	from += d * delta * a
-	from = clampf(from, min, max)
-	
-	if (absf(from) < a * 0.005): from = 0.0 #set to zero if close to zero
-	
-	return from
 
-#keep the player on the ground as they walk and reset their jump
-func hold_on_ground():
-	desired_direction[1] = 0
-	current_vel[1] = 0.0
-	jump_height = 0.0
-	jump_hang = 0.0
-
-#jump off the ground
-func start_jump_on_ground(speed:float):
-	current_vel[1] = speed
-	desired_direction[1] = 1
-	grounded = false
-	cur_cayote = INF
-
-#hold jump on the rising edge of a jump
-func hold_jump_in_air(speed:float):
-	current_vel[1] = speed
-	desired_direction[1] = 1
-
-#hang in the air at the peak of a jump
-func hang_in_air(delta:float):
-	jump_height = INF
-	jump_hang += delta
-	desired_direction[1] = 0
-
-#fall down from the end of a jump
-func end_jump_in_air():
-	jump_height = INF
-	jump_hang = INF
-
-#increment the jump height, intended to call while the player is rising in a jump
-func update_jump_height(delta:float):
-	if (current_vel[1] > 0): jump_height += current_vel[1] * delta
-
-#get the desired direction along a movement axis
-#useful for comparing desired movement to other vectors in the world
-func get_axis_desired(i:int) -> Vector2:
-	return current_axis_vectors[i] * desired_direction[i]
-
-#get the current velocity along a movement axis
-#used by get_velocity to accumulate a current velocity from each axis
-func get_axis_vel(i:int) -> Vector2:
-	return current_axis_vectors[i] * current_vel[i]
+func _to_string():
+	return "CATEGORICAL:\n" + \
+		"\t" + "grounded: " + draw_flag(grounded) + "\n" + \
+		"\t" + "movement mode: " + draw_m_type(movement_type) + "\n" + \
+	"PHYSICAL:\n" + \
+		"\t instant velocity: (" + draw_float(v1.x) + ", " + draw_float(v1.y) + ")\n" + \
+		"\t physics velocity: (" + draw_float(v2.x) + ", " + draw_float(v2.y) + ")\n" + \
+		"\t last normal: (" + draw_float(last_normal.x) + ", " + draw_float(last_normal.y) + ")\n" + \
+		"\t last tangent: (" + draw_float(last_tangent().x) + ", " + draw_float(last_tangent().y) + ")\n" + \
+		"\t run speed: " + draw_float(run_speed) + "\n" + \
+	"INPUT BASED:\n" + \
+		"\t movement axis: (" + draw_float(movement_axis.x) + ", " + draw_float(movement_axis.y) + ")\n" + \
+		"\t facing: (" + draw_float(facing.x) + ", " + draw_float(facing.y) + ")\n" + \
+		"\t drop boosts: (" + draw_float(drop_boost_count) + ")\n"
