@@ -139,7 +139,10 @@ func handle_walk(delta):
 		
 		#if the player is grounded, walk along the slope
 		var t := state.last_tangent()
-		state.v1 = t * state.movement_axis[0] * SPEED
+		var speed := state.v1.length()
+		var target := t * state.movement_axis[0] * SPEED
+		speed += accelerate(speed, target.length(), 5, delta)
+		state.v1 = target.limit_length(speed * maxf(state.v1.dot(target), 0.1) * delta * 10)
 		#also allow a sprint to start instantly
 		if Input.is_action_pressed("sprint"):
 			state.update_movement_type(state.MOVEMENT_TYPE.RUN)
