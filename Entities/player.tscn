@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://c80c87qvuq4qf"]
+[gd_scene load_steps=6 format=3 uid="uid://c80c87qvuq4qf"]
 
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
+[ext_resource type="Texture2D" uid="uid://bhqell83qc0eg" path="res://icon.svg" id="2_otqqd"]
 [ext_resource type="Script" path="res://Scripts/Player/MovementTypeListener.gd" id="4_xw0wx"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_72tns"]
@@ -38,6 +39,11 @@ target_position = Vector2(11, 3)
 [node name="DropTimer" type="Timer" parent="CharacterBody2D"]
 wait_time = 0.25
 one_shot = true
+
+[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D"]
+position = Vector2(3.8147e-06, 0.500006)
+scale = Vector2(0.25, 0.257813)
+texture = ExtResource("2_otqqd")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
