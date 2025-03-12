@@ -39,6 +39,7 @@ var movement_type := MOVEMENT_TYPE.WALK
 var last_movement_type := MOVEMENT_TYPE.WALK
 
 func update_movement_type(to:MOVEMENT_TYPE):
+	if to == movement_type: return
 	last_movement_type = movement_type
 	movement_type = to
 
@@ -99,7 +100,7 @@ func try_cast_down(cast_down_collision:Dictionary, max_floor_y:float, stick_powe
 
 func try_drop(sprint:bool, min_drop_fall_vel:float=0.0) -> bool:
 	if sprint && v2[1] >= min_drop_fall_vel:
-		movement_type = MOVEMENT_TYPE.DROP
+		update_movement_type(MOVEMENT_TYPE.DROP)
 		return true
 	return false
 
@@ -146,6 +147,7 @@ func _to_string():
 	return "CATEGORICAL:\n" + \
 		"\t" + "grounded: " + draw_flag(grounded) + "\n" + \
 		"\t" + "movement mode: " + draw_m_type(movement_type) + "\n" + \
+		"\t" + "last mode: " + draw_m_type(last_movement_type) + "\n" + \
 	"PHYSICAL:\n" + \
 		"\t instant velocity: (" + draw_float(v1.x) + ", " + draw_float(v1.y) + ")\n" + \
 		"\t physics velocity: (" + draw_float(v2.x) + ", " + draw_float(v2.y) + ")\n" + \

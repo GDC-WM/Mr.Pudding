@@ -252,15 +252,15 @@ func handle_drop(delta):
 		if Input.is_action_pressed("sprint"):
 			#this function applies the drop_boost_count to the run_speed
 			state.release_drop(DROP_BOOST, RUN_SPEED)
-			state.movement_type = state.MOVEMENT_TYPE.RUN
+			state.update_movement_type(state.MOVEMENT_TYPE.RUN)
 		else:
 			state.run_speed = SPEED
-			state.movement_type = state.MOVEMENT_TYPE.WALK
+			state.update_movement_type(state.MOVEMENT_TYPE.WALK)
 			return
 		
 		state.drop_boost_count = 0
 	else:
-		state.movement_type = state.MOVEMENT_TYPE.DROP
+		state.update_movement_type(state.MOVEMENT_TYPE.DROP)
 
 func _physics_process(delta):
 	
