@@ -14,10 +14,13 @@ func update_run_animation():
 
 func update_drop_animation():
 	
-	scale.x = pow(speed_factor() + player.state.drop_boost_count, 0.5)
-	scale.y = 1 / scale.x
+	scale.x = pow(speed_factor() * 0.25 + player.state.drop_boost_count, 0.5)
+	scale.y = 1 / scale.x * signf(scale.y)
 	
 	rotation = player.state.get_velocity().angle()
+	
+	if frame % 3 == 0:
+		scale.y *= -1
 	
 	modulate = Color.from_hsv(scale.x, 1.0, 0.5, 1.0)
 

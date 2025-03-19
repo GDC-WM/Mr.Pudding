@@ -1,12 +1,15 @@
-[gd_scene load_steps=22 format=3 uid="uid://c80c87qvuq4qf"]
+[gd_scene load_steps=25 format=3 uid="uid://c80c87qvuq4qf"]
 
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
 [ext_resource type="Texture2D" uid="uid://b2bpr7np4folg" path="res://Sprites/walk.png" id="2_j6w0h"]
 [ext_resource type="Texture2D" uid="uid://dlk5sawm8fmca" path="res://Sprites/DefaultAnimation.png" id="2_opbf3"]
-[ext_resource type="Texture2D" uid="uid://dd0et0yi1m5oj" path="res://Sprites/DropPlaceholder.png" id="3_e7xlf"]
 [ext_resource type="Script" path="res://Scripts/Player/PuddingAnimationController.gd" id="3_hrbei"]
+[ext_resource type="Texture2D" uid="uid://bi2y13mvx7ks6" path="res://Sprites/drop1.png" id="3_ycsyb"]
+[ext_resource type="Texture2D" uid="uid://cj3qjqahgcitx" path="res://Sprites/drop2.png" id="4_8olrk"]
 [ext_resource type="Script" path="res://Scripts/Player/MovementTypeListener.gd" id="4_xw0wx"]
 [ext_resource type="Texture2D" uid="uid://sov1fh2cyth2" path="res://Sprites/mario.png" id="5_bufwc"]
+[ext_resource type="Texture2D" uid="uid://bthn2jihuon63" path="res://Sprites/drop3.png" id="5_t08dn"]
+[ext_resource type="Texture2D" uid="uid://dsr54s18wx1yb" path="res://Sprites/drop4.png" id="6_afgoy"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_72tns"]
 size = Vector2(32, 32)
@@ -82,7 +85,22 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("3_e7xlf")
+"texture": ExtResource("3_ycsyb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_8olrk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_t08dn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_afgoy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_t08dn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_8olrk")
 }],
 "loop": true,
 "name": &"drop",
@@ -152,9 +170,12 @@ wait_time = 0.25
 one_shot = true
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterBody2D"]
+position = Vector2(-7.62939e-06, 0)
+scale = Vector2(0.183908, 0.183908)
 sprite_frames = SubResource("SpriteFrames_gamk8")
-animation = &"walk"
+animation = &"drop"
 autoplay = "default"
+frame_progress = 0.550977
 speed_scale = 2.0
 script = ExtResource("3_hrbei")
 
