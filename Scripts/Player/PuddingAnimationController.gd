@@ -24,6 +24,9 @@ func update_drop_animation():
 	
 	modulate = Color.from_hsv(scale.x, 1.0, 0.5, 1.0)
 
+func update_bounce_animation():
+	scale.x = player.state.movement_axis[0]
+
 func update_modulate():
 	modulate = Color.WHITE
 
@@ -50,6 +53,8 @@ func update_animation_name():
 			animation = "drop"
 		PuddingState.MOVEMENT_TYPE.WALK:
 			animation = "walk"
+		PuddingState.MOVEMENT_TYPE.BOUNCE:
+			animation = "bounce"
 		_:
 			animation = "default"
 
@@ -63,6 +68,8 @@ func _process(delta):
 			update_run_animation()
 		PuddingState.MOVEMENT_TYPE.DROP:
 			update_drop_animation()
+		PuddingState.MOVEMENT_TYPE.BOUNCE:
+			update_bounce_animation()
 	
 	if (player.state.movement_type != movement_type_record):
 		update_animation_name()
