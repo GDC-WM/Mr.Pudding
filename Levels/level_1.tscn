@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://ccsptbpwwpvvb"]
+[gd_scene load_steps=6 format=3 uid="uid://ccsptbpwwpvvb"]
 
 [ext_resource type="TileSet" uid="uid://ct5uyhvw6j7n1" path="res://Tilemaps/fridge_tileset.tres" id="1_otsqm"]
 [ext_resource type="TileSet" uid="uid://cgn5chw5larxt" path="res://Tilemaps/fridge_background_tileset.tres" id="1_ss3t7"]
 [ext_resource type="PackedScene" uid="uid://c80c87qvuq4qf" path="res://Entities/player.tscn" id="2_uhy2d"]
 [ext_resource type="Texture2D" uid="uid://bhqell83qc0eg" path="res://icon.svg" id="4_5rlin"]
+[ext_resource type="PackedScene" uid="uid://ouqsv38brx8e" path="res://Entities/spoon_enemy.tscn" id="5_pgi8p"]
 
 [node name="Level1" type="Node2D"]
 
@@ -32,3 +33,6 @@ polygon = PackedVector2Array(64, -59.6, 64, 59, 59.6, 64, -59, 64, -64, 59.6, -6
 
 [node name="Sprite2D" type="Sprite2D" parent="StaticBody2D"]
 texture = ExtResource("4_5rlin")
+
+[node name="SpoonEnemy" parent="." instance=ExtResource("5_pgi8p")]
+position = Vector2(178, -72)
