@@ -155,6 +155,29 @@ func handle_walk(delta):
 		
 		state.try_drop(Input.is_action_pressed("sprint"))
 
+func is_collision_one_way(collision:Dictionary) -> bool:
+	
+	if !(collision.has("collider")) || !(collision.has("point")):
+		return false
+	
+	var collider = collision["collider"];
+	if !(collider is TileMap):
+		print("collider ", collider, " is not a tile map!")
+		return false
+	
+	var tilemap := (collision["collider"] as TileMap)
+	
+	var local_pos := tilemap.to_local(collision["point"])
+	# https://forum.godotengine.org/t/how-can-i-detect-a-tilemaplayer-tile-as-one-way-using-a-raycast/77787/4
+	var cell := tilemap.local_to_map(local_pos)
+		
+	var data := tilemap.get_cell_tile_data(0, cell)
+	
+	if data:
+		return data.is_collision_polygon_one_way(0, 0) 
+	else:
+		return false
+
 func handle_run(delta):
 	
 	#check if the player is grounded like in handle_walk, pulling them towards the ground if necessary
@@ -167,11 +190,14 @@ func handle_run(delta):
 	var result := get_last_closest_point(cast_forward)
 	var normal = result["normal"] if result.has("normal") else null
 	
+
+	
 	#if the normal is in-range for wall running (i.e. not a ceiling), attach to it
 	#the state automatically computes a normal tangent that's used for movement, so this is all we have to do in theory
 	#but, in practice, we need to stick to the wall, too, or else the try_ground call above will fail on subsequent frames
-	if normal:
+	if normal && !is_collision_one_way(result): 
 		var result_2 := state.try_climb_on(normal, MAX_FLOOR_Y_RUN, MAX_RAMP)
+		
 		if result_2 == state.CLIMB_RESULT.OK:
 			state.v2 = -normal * STICK_POWER
 		else:
