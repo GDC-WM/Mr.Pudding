@@ -162,7 +162,7 @@ func is_collision_one_way(collision:Dictionary) -> bool:
 	
 	var collider = collision["collider"];
 	if !(collider is TileMap):
-		print("collider ", collider, " is not a tile map!")
+		#print("collider ", collider, " is not a tile map!")
 		return false
 	
 	var tilemap := (collision["collider"] as TileMap)
