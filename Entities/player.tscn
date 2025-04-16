@@ -1,6 +1,7 @@
-[gd_scene load_steps=25 format=3 uid="uid://c80c87qvuq4qf"]
+[gd_scene load_steps=26 format=3 uid="uid://c80c87qvuq4qf"]
 
 [ext_resource type="Script" path="res://Scripts/Player/PuddingMovement.gd" id="1_6col6"]
+[ext_resource type="Texture2D" uid="uid://bb7d7c1c3rvah" path="res://Sprites/squashpng.png" id="2_6djyh"]
 [ext_resource type="Texture2D" uid="uid://b2bpr7np4folg" path="res://Sprites/walk.png" id="2_j6w0h"]
 [ext_resource type="Texture2D" uid="uid://dlk5sawm8fmca" path="res://Sprites/DefaultAnimation.png" id="2_opbf3"]
 [ext_resource type="Script" path="res://Scripts/Player/PuddingAnimationController.gd" id="3_hrbei"]
@@ -63,6 +64,14 @@ region = Rect2(96, 32, 32, 32)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_gamk8"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_6djyh")
+}],
+"loop": true,
+"name": &"bounce",
+"speed": 5.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_vmnf8")
@@ -173,9 +182,8 @@ one_shot = true
 position = Vector2(-7.62939e-06, 0)
 scale = Vector2(0.183908, 0.183908)
 sprite_frames = SubResource("SpriteFrames_gamk8")
-animation = &"drop"
+animation = &"bounce"
 autoplay = "default"
-frame_progress = 0.550977
 speed_scale = 2.0
 script = ExtResource("3_hrbei")
 
